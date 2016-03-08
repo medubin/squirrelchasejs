@@ -46,15 +46,15 @@
 
 	var MovingObject = __webpack_require__ (1);
 	var Util = __webpack_require__ (2);
-	var Squirrel = __webpack_require__(8);
+	var Squirrel = __webpack_require__(3);
 	var Game = __webpack_require__(5);
 	var GameView = __webpack_require__(6);
-	var Dog = __webpack_require__(9);
+	var Dog = __webpack_require__(4);
 
 
 	var canvas = document.getElementById('game-canvas');
 	var ctx = canvas.getContext('2d');
-	var game = new Game(1);
+	var game = new Game(8);
 	var gameView = new GameView(ctx,game);
 
 	canvas.width  = game.dimX;
@@ -162,13 +162,187 @@
 
 
 /***/ },
-/* 3 */,
-/* 4 */,
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var utils = __webpack_require__ (2);
+	var MovingObject = __webpack_require__ (1);
+	var Dog = __webpack_require__(4);
+
+	var COLOR = "rgba(139,69,19, 1.0)";
+	var RADIUS = 10;
+	var SPEED = 3;
+
+	function Squirrel (options) {
+	  this.gen = options.gen;
+	  this.pos = options.pos;
+	  this.game = options.game;
+	  this.vel = utils.randomVect(SPEED);
+	  this.radius = RADIUS;
+	  this.color = COLOR;
+	  this.direct = 0;
+	  this.randomDirectOffset = (Math.random() - 0.5) * 2;
+	  this.randomVelOffset = (Math.random() - 0.5);
+	  this.dazed = 0;
+	}
+	utils.inherits(Squirrel, MovingObject);
+
+
+	Squirrel.prototype.collideWith = function (otherObject) {
+	  if (otherObject.toString() === 'Squirrel') {
+	    this.dazed = 100;
+	  }
+	};
+
+
+
+
+	Squirrel.prototype.draw = function(ctx) {
+	  ctx.fillStyle = this.color;
+	  ctx.beginPath();
+	  ctx.lineTo(this.pos[0],this.pos[1]);
+	  ctx.arc(this.pos[0],this.pos[1],this.radius,this.direct +
+	      0.6*Math.PI,this.direct + 1.4*Math.PI, true);
+	  ctx.lineTo(this.pos[0],this.pos[1]);
+	  ctx.fill();
+	  ctx.lineWidth = 1;
+	  ctx.strokeStyle = 'white';
+	  ctx.stroke();
+	};
+
+
+	Squirrel.prototype.toString = function() {
+	  return 'Squirrel';
+	};
+
+	Squirrel.prototype.chase = function(pos) {
+	    var deltaY = pos[1] - this.pos[1];
+	    var deltaX = pos[0] - this.pos[0];
+	    var angleInRadians = Math.atan2(deltaY, deltaX);
+	    this.turn(angleInRadians);
+	};
+
+	Squirrel.prototype.turn = function (angle) {
+	  this.direct = angle + this.randomDirectOffset;
+	  // this.direct = this.direct % (Math.PI * 2);
+	  // console.log(this.direct);
+
+	};
+
+	// var xVel = impulse * Math.cos(this.direct) + this.vel[0];
+	// var yVel = impulse * Math.sin(this.direct) + this.vel[1];
+
+
+
+
+	Squirrel.prototype.move = function(pos) {
+	  var travelDirection = this.direct;
+	  // if ( this.dazed !== 0 ) {
+	  //   travelDirection = (Math.random() * Math.PI * 2);
+	  //   this.dazed--;
+	  // }
+
+	  this.vel[0] = (SPEED + this.randomVelOffset) * Math.cos(travelDirection);
+	  this.vel[1] = (SPEED + this.randomVelOffset) * Math.sin(travelDirection);
+	  this.pos[0] += this.vel[0];
+	  this.pos[1] += this.vel[1];
+	  this.chase(pos);
+
+	};
+
+
+
+
+	module.exports = Squirrel;
+
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var utils = __webpack_require__ (2);
+	var MovingObject = __webpack_require__ (1);
+	var Squirrel = __webpack_require__(3);
+
+	var COLOR = "rgba(255, 255, 255, 0.0)";
+	var RADIUS = 15;
+	var SPEED = [0,0];
+	var DIRECTION = 0;
+
+
+	function Dog (options) {
+	  this.game = options.game;
+	  this.vel = SPEED;
+	  this.radius = RADIUS;
+	  this.color = COLOR;
+	  this.pos = options.pos;
+	  this.direct = 0;
+	  this.lives = 3;
+
+	}
+	utils.inherits(Dog, MovingObject);
+
+	Dog.prototype.relocate = function () {
+	  this.vel = [0,0];
+	  this.pos = this.game.randPosition();
+	  this.lives--;
+
+	};
+	Dog.prototype.MAX_VELOCITY = 10;
+	Dog.prototype.power = function (impulse) {
+	  var xVel = impulse * Math.cos(this.direct) + this.vel[0];
+	  var yVel = impulse * Math.sin(this.direct) + this.vel[1];
+
+	  this.vel = [
+	   xVel > this.MAX_VELOCITY ? this.MAX_VELOCITY : xVel,
+	   yVel > this.MAX_VELOCITY ? this.MAX_VELOCITY : yVel
+	 ];
+
+	};
+
+
+
+	Dog.prototype.draw = function(ctx) {
+	  ctx.fillStyle = this.color;
+	  ctx.beginPath();
+	  ctx.lineTo(this.pos[0],this.pos[1]);
+	  ctx.arc(this.pos[0],this.pos[1],this.radius,this.direct +
+	      0.6*Math.PI,this.direct + 1.4*Math.PI, true);
+	  ctx.lineTo(this.pos[0],this.pos[1]);
+	  ctx.fill();
+	  ctx.lineWidth = 1;
+	  ctx.strokeStyle = 'white';
+	  ctx.stroke();
+	};
+
+	Dog.prototype.turn = function (angle) {
+	  this.direct += angle;
+
+	};
+
+
+	Dog.prototype.applyFriction = function (factor) {
+	  this.vel[0] -= this.vel[0] * factor;
+	  this.vel[1] -= this.vel[1] * factor;
+
+	};
+
+	Dog.prototype.collideWith = function (otherObject) {
+	  if (otherObject.toString() === 'Squirrel') {
+	    this.relocate();
+	  }
+	};
+
+
+	module.exports = Dog;
+
+
+/***/ },
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Squirrel = __webpack_require__(8);
-	var Dog = __webpack_require__(9);
+	var Squirrel = __webpack_require__(3);
+	var Dog = __webpack_require__(4);
 	var utils = __webpack_require__ (2);
 	function Game(numSquirrels) {
 	  this.numSquirrels = numSquirrels;
@@ -671,169 +845,6 @@
 	  if(true) module.exports = assignKey;
 
 	})(this);
-
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var utils = __webpack_require__ (2);
-	var MovingObject = __webpack_require__ (1);
-	var Dog = __webpack_require__(9);
-
-	var COLOR = "rgba(139,69,19, 1.0)";
-	var RADIUS = 10;
-	var SPEED = 6;
-
-	function Squirrel (options) {
-	  this.gen = options.gen;
-	  this.pos = options.pos;
-	  this.game = options.game;
-	  this.vel = utils.randomVect(SPEED);
-	  this.radius = RADIUS;
-	  this.color = COLOR;
-	  this.direct = 0;
-	}
-	utils.inherits(Squirrel, MovingObject);
-
-
-
-	Squirrel.prototype.draw = function(ctx) {
-	  ctx.fillStyle = this.color;
-	  ctx.beginPath();
-	  ctx.lineTo(this.pos[0],this.pos[1]);
-	  ctx.arc(this.pos[0],this.pos[1],this.radius,this.direct +
-	      0.6*Math.PI,this.direct + 1.4*Math.PI, true);
-	  ctx.lineTo(this.pos[0],this.pos[1]);
-	  ctx.fill();
-	  ctx.lineWidth = 1;
-	  ctx.strokeStyle = 'white';
-	  ctx.stroke();
-	};
-
-
-	Squirrel.prototype.toString = function() {
-	  return 'Squirrel';
-	};
-
-	Squirrel.prototype.chase = function(pos) {
-	    this.turn(Math.random()-0.5);
-	    var deltaY = this.pos[1] - pos[1];
-	    var deltaX = this.pos[0] - pos[0];
-
-
-	  var angleInDegrees = Math.atan(deltaY / deltaX) * 180 / Math.PI;
-	  console.log(angleInDegrees);
-	  // this.vel[0] = SPEED * Math.sin((pos[0] - this.pos[0]) / (pos[1] - this.pos[1]));
-	  // this.vel[1] = SPEED * Math.cos((pos[0] - this.pos[0]) / (pos[1] - this.pos[1]) );
-	};
-
-	Squirrel.prototype.turn = function (angle) {
-	  this.direct += angle;
-
-	};
-
-	// var xVel = impulse * Math.cos(this.direct) + this.vel[0];
-	// var yVel = impulse * Math.sin(this.direct) + this.vel[1];
-
-
-
-
-	Squirrel.prototype.move = function(pos) {
-	  this.vel[0] = SPEED * Math.cos(this.direct);
-	  this.vel[1] = SPEED * Math.sin(this.direct);
-
-	  this.pos[0] += this.vel[0];
-	  this.pos[1] += this.vel[1];
-	  this.chase(pos);
-	};
-
-
-
-
-	module.exports = Squirrel;
-
-
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var utils = __webpack_require__ (2);
-	var MovingObject = __webpack_require__ (1);
-	var Squirrel = __webpack_require__(8);
-
-	var COLOR = "rgba(255, 255, 255, 0.0)";
-	var RADIUS = 15;
-	var SPEED = [0,0];
-	var DIRECTION = 0;
-
-
-	function Dog (options) {
-	  this.game = options.game;
-	  this.vel = SPEED;
-	  this.radius = RADIUS;
-	  this.color = COLOR;
-	  this.pos = options.pos;
-	  this.direct = 0;
-	  this.lives = 3;
-
-	}
-	utils.inherits(Dog, MovingObject);
-
-	Dog.prototype.relocate = function () {
-	  this.vel = [0,0];
-	  this.pos = this.game.randPosition();
-	  this.lives--;
-
-	};
-	Dog.prototype.MAX_VELOCITY = 10;
-	Dog.prototype.power = function (impulse) {
-	  var xVel = impulse * Math.cos(this.direct) + this.vel[0];
-	  var yVel = impulse * Math.sin(this.direct) + this.vel[1];
-
-	  this.vel = [
-	   xVel > this.MAX_VELOCITY ? this.MAX_VELOCITY : xVel,
-	   yVel > this.MAX_VELOCITY ? this.MAX_VELOCITY : yVel
-	 ];
-
-	};
-
-
-
-	Dog.prototype.draw = function(ctx) {
-	  ctx.fillStyle = this.color;
-	  ctx.beginPath();
-	  ctx.lineTo(this.pos[0],this.pos[1]);
-	  ctx.arc(this.pos[0],this.pos[1],this.radius,this.direct +
-	      0.6*Math.PI,this.direct + 1.4*Math.PI, true);
-	  ctx.lineTo(this.pos[0],this.pos[1]);
-	  ctx.fill();
-	  ctx.lineWidth = 1;
-	  ctx.strokeStyle = 'white';
-	  ctx.stroke();
-	};
-
-	Dog.prototype.turn = function (angle) {
-	  console.log(this.direct);
-	  this.direct += angle;
-
-	};
-
-
-	Dog.prototype.applyFriction = function (factor) {
-	  this.vel[0] -= this.vel[0] * factor;
-	  this.vel[1] -= this.vel[1] * factor;
-
-	};
-
-	Dog.prototype.collideWith = function (otherObject) {
-	  if (otherObject.toString() === 'Squirrel') {
-	    this.relocate();
-	  }
-	};
-
-
-	module.exports = Dog;
 
 
 /***/ }

@@ -8,7 +8,7 @@ var Dog = require("./dog");
 
 var canvas = document.getElementById('game-canvas');
 var ctx = canvas.getContext('2d');
-var game = new Game(1);
+var game = new Game(8);
 var gameView = new GameView(ctx,game);
 
 canvas.width  = game.dimX;

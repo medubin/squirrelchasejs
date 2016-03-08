@@ -54,7 +54,6 @@ Dog.prototype.draw = function(ctx) {
 };
 
 Dog.prototype.turn = function (angle) {
-  console.log(this.direct);
   this.direct += angle;
 
 };
