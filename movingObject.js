@@ -20,6 +20,10 @@ MovingObject.prototype.draw = function(ctx) {
   ctx.stroke();
 };
 
+MovingObject.prototype.applyFriction = function (factor) {
+  this.vel[0] -= this.vel[0] * factor;
+  this.vel[1] -= this.vel[1] * factor;
+};
 
 
 MovingObject.prototype.move = function() {

@@ -7,7 +7,6 @@ var RADIUS = 10;
 var SPEED = 3;
 
 function Squirrel (options) {
-  this.gen = options.gen;
   this.pos = options.pos;
   this.game = options.game;
   this.vel = [0,0];//utils.randomVect(SPEED);
@@ -23,7 +22,8 @@ utils.inherits(Squirrel, MovingObject);
 
 Squirrel.prototype.collideWith = function (otherObject) {
   if (otherObject.toString() === 'Squirrel') {
-    this.dazed = 100;
+    this.vel[0] = this.vel[0] * -1;
+    this.vel[1] = this.vel[1] * -1;
   }
 };
 

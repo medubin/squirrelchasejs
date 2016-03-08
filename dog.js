@@ -2,7 +2,7 @@ var utils = require ("./utils");
 var MovingObject = require ("./movingObject");
 var Squirrel = require('./squirrel');
 
-var COLOR = "rgba(255, 255, 255, 0.0)";
+var COLOR = "rgba(0, 0, 0, 1.0)";
 var RADIUS = 15;
 var SPEED = [0,0];
 var DIRECTION = 0;
@@ -59,15 +59,16 @@ Dog.prototype.turn = function (angle) {
 };
 
 
-Dog.prototype.applyFriction = function (factor) {
-  this.vel[0] -= this.vel[0] * factor;
-  this.vel[1] -= this.vel[1] * factor;
 
-};
 
 Dog.prototype.collideWith = function (otherObject) {
+  console.log(otherObject.toString());
   if (otherObject.toString() === 'Squirrel') {
     this.relocate();
+  } else if (otherObject.toString() === 'Acorn') {
+    this.game.remove(otherObject);
+
+
   }
 };
 

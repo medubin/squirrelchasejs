@@ -1,19 +1,28 @@
 var Squirrel = require('./squirrel');
 var Dog = require('./dog');
 var utils = require ("./utils");
+var Acorn = require('./acorn');
 function Game(numSquirrels) {
   this.numSquirrels = numSquirrels;
   this.dimX = 1000;
   this.dimY = 600;
   this.squirrels = [];
-  this.addSquirrel();
+  this.acorns = [];
   this.dog = new Dog({game: this, pos: this.randPosition()});
   this.points = 0;
 }
 
-Game.prototype.addSquirrel = function () {
+Game.prototype.addSquirrels = function () {
   for (var i = 0; i < this.numSquirrels; i++) {
     this.squirrels.push(new Squirrel({pos: this.randPosition(), game: this}));
+  }
+};
+
+Game.prototype.addAcorns = function() {
+  if (this.acorns.length === 0) {
+    this.acorns.push(new Acorn({pos: this.randPosition(), game: this}));
+    this.acorns.push(new Acorn({pos: this.randPosition(), game: this}));
+    this.addSquirrels();
   }
 };
 
@@ -71,9 +80,10 @@ Game.prototype.drawLives = function(ctx) {
 
 
 Game.prototype.moveObjects = function() {
-  for (var i = 0; i < this.allObjects().length; i++) {
-    this.allObjects()[i].move(this.dog.pos);
-    this.allObjects()[i].wrap();
+  for (var i = 0; i < this.allMovingObjects().length; i++) {
+    this.allMovingObjects()[i].move(this.dog.pos);
+    this.allMovingObjects()[i].applyFriction(0.04);
+    this.allMovingObjects()[i].wrap();
   }
 };
 
@@ -87,13 +97,18 @@ Game.prototype.wrap = function (pos) {
 };
 
 Game.prototype.checkCollisons = function () {
-  for (var i = this.allObjects().length - 1; i >= 0; i--) {
+  for (var i = this.allMovingObjects().length - 1; i >= 0; i--) {
     for(var j = i - 1; j >= 0; j--){
-      if (this.objectsCollided(this.allObjects()[i],this.allObjects()[j])) {
-        this.allObjects()[i].collideWith(this.allObjects()[j]);
+      if (this.objectsCollided(this.allMovingObjects()[i],this.allMovingObjects()[j])) {
+        this.allMovingObjects()[i].collideWith(this.allMovingObjects()[j]);
       }
-      if (this.objectsCollided(this.allObjects()[j],this.allObjects()[i])){
-        this.allObjects()[j].collideWith(this.allObjects()[i]);
+      if (this.objectsCollided(this.allMovingObjects()[j],this.allMovingObjects()[i])){
+        this.allMovingObjects()[j].collideWith(this.allMovingObjects()[i]);
+      }
+    }
+    for(var k = this.allStationaryObjects().length - 1; k >=0; k--) {
+      if(this.objectsCollided(this.allMovingObjects()[i], this.allStationaryObjects()[k])) {
+        this.allMovingObjects()[i].collideWith(this.allStationaryObjects()[k]);
       }
     }
   }
@@ -108,17 +123,27 @@ Game.prototype.objectsCollided = function (obj1, obj2) {
 Game.prototype.step = function() {
   this.moveObjects();
   this.checkCollisons();
-  this.dog.applyFriction(0.03);
+  this.addAcorns();
+  // this.dog.applyFriction(0.03);
 };
 
 
 Game.prototype.remove = function(object) {
-  if (object instanceof Squirrel) {
-    this.squirrels.splice(this.squirrels.indexOf(object), 1);
+  if (object.toString() === 'Acorn') {
+    this.acorns.splice(this.acorns.indexOf(object), 1);
+    this.points += 1;
   }
 };
-Game.prototype.allObjects = function() {
+Game.prototype.allMovingObjects = function() {
   return this.squirrels.concat(this.dog);
+};
+
+Game.prototype.allStationaryObjects = function() {
+  return this.acorns;
+};
+
+Game.prototype.allObjects = function() {
+  return this.allMovingObjects().concat(this.allStationaryObjects());
 };
 
 Game.prototype.isOutOfBounds = function (pos) {
