@@ -177,12 +177,12 @@
 	  this.gen = options.gen;
 	  this.pos = options.pos;
 	  this.game = options.game;
-	  this.vel = utils.randomVect(SPEED);
+	  this.vel = [0,0];//utils.randomVect(SPEED);
 	  this.radius = RADIUS;
 	  this.color = COLOR;
 	  this.direct = 0;
 	  this.randomDirectOffset = (Math.random() - 0.5) * 2;
-	  this.randomVelOffset = (Math.random() - 0.5);
+	  this.maxSpeed = SPEED + (Math.random() - 0.5);
 	  this.dazed = 0;
 	}
 	utils.inherits(Squirrel, MovingObject);
@@ -236,17 +236,24 @@
 
 
 	Squirrel.prototype.move = function(pos) {
-	  var travelDirection = this.direct;
-	  // if ( this.dazed !== 0 ) {
-	  //   travelDirection = (Math.random() * Math.PI * 2);
-	  //   this.dazed--;
-	  // }
+	  this.chase(pos);
 
-	  this.vel[0] = (SPEED + this.randomVelOffset) * Math.cos(travelDirection);
-	  this.vel[1] = (SPEED + this.randomVelOffset) * Math.sin(travelDirection);
+	  //follow and accel
+
+	  var xVel = 0.5 * Math.cos(this.direct) + this.vel[0];
+	  var yVel = 0.5 * Math.sin(this.direct) + this.vel[1];
+
+	  this.vel[0] = (Math.abs(xVel) > this.maxSpeed ? (this.maxSpeed * (xVel/Math.abs(xVel))) : xVel);
+	  this.vel[1] = (Math.abs(yVel) > this.maxSpeed ? (this.maxSpeed * (yVel/Math.abs(yVel))) : yVel);
+
+
+	//follow
+	  // this.vel[0] = (SPEED + this.randomVelOffset) * Math.cos(this.direct);
+	  // this.vel[1] = (SPEED + this.randomVelOffset) * Math.sin(this.direct);
+
+
 	  this.pos[0] += this.vel[0];
 	  this.pos[1] += this.vel[1];
-	  this.chase(pos);
 
 	};
 
@@ -513,7 +520,7 @@
 	      clearInterval(gameLoop);
 	     }
 	  }.bind(this), 20);
-	  console.log('what');
+
 	};
 
 	GameView.prototype.renderLose = function () {

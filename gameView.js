@@ -17,7 +17,7 @@ GameView.prototype.start = function() {
       clearInterval(gameLoop);
      }
   }.bind(this), 20);
-  console.log('what');
+
 };
 
 GameView.prototype.renderLose = function () {
