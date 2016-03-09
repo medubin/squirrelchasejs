@@ -44,13 +44,13 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var MovingObject = __webpack_require__ (1);
+	// var MovingObject = require ("./movingObject");
 
-	var Util = __webpack_require__ (2);
-	var Squirrel = __webpack_require__(3);
-	var Game = __webpack_require__(5);
-	var GameView = __webpack_require__(6);
-	var Dog = __webpack_require__(4);
+	// var Util = require ("./utils");
+	// var Squirrel = require("./squirrel");
+	var Game = __webpack_require__(1);
+	var GameView = __webpack_require__(8);
+	// var Dog = require("./dog");
 
 
 
@@ -60,7 +60,7 @@
 	var gameView = new GameView(ctx,game);
 
 	canvas.width  = game.dimX;
-	canvas.height = game.dimY + 50;
+	canvas.height = game.dimY;
 
 	gameView.start();
 
@@ -69,111 +69,168 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var utils = __webpack_require__ (2);
-
-
-	function MovingObject(options) {
-	  this.pos = options.pos;
-	  this.vel = options.vel;
-	  this.radius = options.radius;
-	  this.color = options.color;
-	  this.game = options.game;
-
+	var Squirrel = __webpack_require__(2);
+	var Dog = __webpack_require__(5);
+	var utils = __webpack_require__ (3);
+	var Acorn = __webpack_require__(6);
+	function Game(numSquirrels) {
+	  this.numSquirrels = numSquirrels;
+	  this.dimX = 1000;
+	  this.dimY = 600;
+	  this.squirrels = [];
+	  this.acorns = [];
+	  this.dog = new Dog({game: this, pos: [this.dimX/2, this.dimY/2]});
+	  this.points = 0;
 	}
 
-	MovingObject.prototype.draw = function(ctx) {
-	  ctx.fillStyle = this.color;
-	  ctx.beginPath();
-	  ctx.arc(this.pos[0],this.pos[1],this.radius,2*Math.PI,0, true);
-	  ctx.fill();
-	  ctx.lineWidth = 1;
-	  ctx.strokeStyle = 'white';
-	  ctx.stroke();
-	};
-
-	MovingObject.prototype.applyFriction = function (factor) {
-	  this.vel[0] -= this.vel[0] * factor;
-	  this.vel[1] -= this.vel[1] * factor;
-	};
-
-
-	MovingObject.prototype.move = function() {
-	  this.pos[0] += this.vel[0];
-	  this.pos[1] += this.vel[1];
-	};
-
-	MovingObject.prototype.wrap = function () {
-	  var outOfBounds = this.game.isOutOfBounds(this.pos);
-	  if (outOfBounds === 'X') {
-	      this.vel[0] = this.vel[0] * -1;
-	  } else if (outOfBounds === 'Y') {
-	      this.vel[1] = this.vel[1] * -1;
+	Game.prototype.addSquirrels = function () {
+	  for (var i = 0; i < this.numSquirrels; i++) {
+	    this.squirrels.push(new Squirrel({pos: this.randSquirrelPosition(), game: this}));
 	  }
 	};
 
-	MovingObject.prototype.isCollidedWith = function(otherObject) {
-	  return utils.distanceBetween(this.pos, otherObject.pos) <
-	                              (this.radius + otherObject.radius);
+	Game.prototype.addAcorns = function() {
+	  if (this.acorns.length === 0) {
+	    this.acorns.push(new Acorn({pos: this.randPosition(), game: this}));
+	    this.acorns.push(new Acorn({pos: this.randPosition(), game: this}));
+	    this.addSquirrels();
+	  }
+	};
+
+	Game.prototype.randPosition = function() {
+	  return [Math.floor(this.dimX * 0.8 * Math.random()) + this.dimX * 0.1,
+	          Math.floor(this.dimY * 0.8 * Math.random()) + this.dimY * 0.1];
+	};
+
+	Game.prototype.randSquirrelPosition = function() {
+	  var startPosition = [Math.floor(this.dimX * Math.random()),Math.floor(this.dimY * Math.random())];
+	  if (Math.floor(Math.random() * (2)) === 1 ) {
+	    startPosition[1] = this.dimY * Math.floor(Math.random() * (2));
+	  } else {
+	    startPosition[0] = this.dimX * Math.floor(Math.random() * (2));
+	  }
+	  return startPosition;
+	};
+
+	Game.prototype.draw = function (ctx) {
+	  ctx.clearRect(0,0,this.dimX , this.dimY + 50);
+	  for (var i = 0; i < this.allObjects().length; i++) {
+	    this.allObjects()[i].draw(ctx);
+	  }
+
+	  this.drawPoints(ctx);
 
 	};
 
-	MovingObject.prototype.collideWith = function (otherObject) {
+	Game.prototype.drawPoints = function(ctx) {
+	  ctx.font="50px Courier";
+	  ctx.fillStyle = "black";
+	  ctx.fillText(this.points,this.dimX - (50 + (25 * this.points.toString().length)) , this.dimY - 10);
+
+	};
+
+
+	Game.prototype.moveObjects = function() {
+	  for (var i = 0; i < this.allMovingObjects().length; i++) {
+	    this.allMovingObjects()[i].move(this.dog.pos);
+	    this.allMovingObjects()[i].applyFriction(0.04);
+	    this.allMovingObjects()[i].wrap();
+	  }
+	};
+
+	Game.prototype.wrap = function (pos) {
+	  var xpos = pos[0] % this.dimX;
+	  var ypos = pos[1] % this.dimY;
+	  if (xpos < 0) xpos = this.dimX ;
+	  if (ypos < 0) ypos = this.dimY ;
+
+	  return [xpos, ypos];
+	};
+
+	Game.prototype.checkCollisons = function () {
+	  for (var i = this.allMovingObjects().length - 1; i >= 0; i--) {
+	    for(var j = i - 1; j >= 0; j--){
+	      if (this.objectsCollided(this.allMovingObjects()[i],this.allMovingObjects()[j])) {
+	        this.allMovingObjects()[i].collideWith(this.allMovingObjects()[j]);
+	        var tempVel = this.allMovingObjects()[j].vel;
+	      }
+	      if (this.objectsCollided(this.allMovingObjects()[j],this.allMovingObjects()[i], tempVel)){
+	        this.allMovingObjects()[j].collideWith(this.allMovingObjects()[i]);
+	      }
+	    }
+	    for(var k = this.allStationaryObjects().length - 1; k >=0; k--) {
+	      if(this.objectsCollided(this.allMovingObjects()[i], this.allStationaryObjects()[k])) {
+	        this.allMovingObjects()[i].collideWith(this.allStationaryObjects()[k]);
+	      }
+	    }
+	  }
+	};
+
+	Game.prototype.objectsCollided = function (obj1, obj2) {
+	  return (obj1 && obj2 && obj1.isCollidedWith(obj2));
+	};
+
+
+
+	Game.prototype.step = function() {
+	  this.moveObjects();
+	  this.checkCollisons();
+	  this.addAcorns();
+	  this.dog.applyFriction(0.1);
+	};
+
+
+	Game.prototype.remove = function(object) {
+	  if (object.toString() === 'Acorn') {
+	    this.acorns.splice(this.acorns.indexOf(object), 1);
+	    this.points += 1;
+	  }
+	};
+	Game.prototype.allMovingObjects = function() {
+	  return this.squirrels.concat(this.dog);
+	};
+
+	Game.prototype.allStationaryObjects = function() {
+	  return this.acorns;
+	};
+
+	Game.prototype.allObjects = function() {
+	  return this.allMovingObjects().concat(this.allStationaryObjects());
+	};
+
+	Game.prototype.isOutOfBounds = function (pos, radius) {
+	    if ( pos[0] + radius > this.dimX || pos[0] - radius < 0 ) {
+	      return 'X';
+	    } else if (pos[1] + radius > this.dimY || pos[1] - radius < 0)  {
+	      return 'Y';
+	    }
 
 
 	};
 
-	 module.exports = MovingObject;
+	Game.prototype.playerLoses = function () {
+	  return (this.dog.lives <= 0);
+	};
+
+	Game.prototype.playerWins = function () {
+	  return (this.squirrels.length === 0);
+	};
+
+	Game.prototype.over = function () {
+	  return (this.playerLoses() || this.playerWins());
+	};
+
+
+	module.exports = Game;
 
 
 /***/ },
 /* 2 */
-/***/ function(module, exports) {
-
-	  function getRandomIntInclusive(min, max) {
-	    return Math.floor(Math.random() * (max - min + 1)) + min;
-	  }
-
-	var Utils = {
-	  inherits: function (ChildClass, ParentClass) {
-	    function Surrogate() {}
-	    Surrogate.prototype = ParentClass.prototype;
-	    ChildClass.prototype = new Surrogate;
-	    ChildClass.prototype.constructor = ChildClass;
-
-
-	  },
-
-	  randomVect: function (length) {
-	    var randX = length * Math.random();
-	    var randY = Math.sqrt(Math.pow(length, 2) - Math.pow(randX, 2));
-	    randY = randY * [-1,1][getRandomIntInclusive(0,1)];
-	    randX = randX * [-1,1][getRandomIntInclusive(0,1)];
-	    return [randX,randY];
-	  },
-
-	  distanceBetween: function(pos1, pos2) {
-	    var xDistance = Math.abs(pos1[0] - pos2[0]);
-	    var yDistance = Math.abs(pos1[1] - pos2[1]);
-	    var tDistance = Math.sqrt(Math.pow(xDistance, 2) + Math.pow(yDistance, 2));
-	    return tDistance;
-	  }
-	};
-
-
-
-
-
-
-	module.exports = Utils;
-
-
-/***/ },
-/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var utils = __webpack_require__ (2);
-	var MovingObject = __webpack_require__ (1);
-	var Dog = __webpack_require__(4);
+	var utils = __webpack_require__ (3);
+	var MovingObject = __webpack_require__ (4);
+	var Dog = __webpack_require__(5);
 
 	var COLOR = "rgba(139,69,19, 1.0)";
 	var RADIUS = 15;
@@ -185,7 +242,7 @@
 
 
 	var squirrelSprite = new Image();
-	squirrelSprite.src = "./squirre_sprites.png";
+	squirrelSprite.src = "./squirrel_sprites.png";
 
 	var tickCount = 0;
 	var frameIndex = 0;
@@ -241,16 +298,18 @@
 	  this.color = COLOR;
 	  this.direct = 0;
 	  this.randomDirectOffset = (Math.random() - 0.5) * 2;
-	  this.maxSpeed = SPEED + (Math.random() - 0.5);
+	  this.maxSpeed = SPEED + (Math.random()) * 1.5;
 	  this.dazed = 0;
 	}
 	utils.inherits(Squirrel, MovingObject);
 
 
-	Squirrel.prototype.collideWith = function (otherObject) {
+	Squirrel.prototype.collideWith = function (otherObject, tempVel) {
 	  if (otherObject.toString() === 'Squirrel') {
-	    this.vel[0] = this.vel[0] * -1;
-	    this.vel[1] = this.vel[1] * -1;
+	    this.vel = otherObject.vel;
+	    if (tempVel) this.vel = tempVel;
+	    // this.vel[0] = this.vel[0] * -1;
+	    // this.vel[1] = this.vel[1] * -1;
 	  }
 	};
 
@@ -258,44 +317,19 @@
 
 
 	Squirrel.prototype.draw = function(ctx) {
-	  var squirrelSpriteImage = sprite({
+	  if (!squirrelSpriteImage) var squirrelSpriteImage = sprite({
 	    context: ctx,
 	    width: 96,
 	    height: 32,
 	    image: squirrelSprite
 	});
 
+	  ctx.translate(this.pos[0], this.pos[1]);
+	  ctx.rotate(this.direct - Math.PI / 2);
 
-	  // ctx.save();
-
-	   // move to the middle of where we want to draw our image
-	   ctx.translate(this.pos[0], this.pos[1]);
-
-	   // rotate around that point, converting our
-	   // angle from degrees to radians
-	   ctx.rotate(this.direct - Math.PI / 2);
-
-	   // draw it up and to the left by half the width
-	   // and height of the image
-	   squirrelSpriteImage.render();
-	   squirrelSpriteImage.update();
-	  //  ctx.drawImage(squirrelImage, -RADIUS, -RADIUS, RADIUS * 2, RADIUS * 2);
-
-	   // and restore the co-ords to how they were when we began
-	  //  ctx.restore();
+	  squirrelSpriteImage.render();
+	  squirrelSpriteImage.update();
 	  ctx.setTransform(1,0,0,1,0,0);
-
-
-	  // ctx.fillStyle = this.color;
-	  // ctx.beginPath();
-	  // ctx.lineTo(this.pos[0],this.pos[1]);
-	  // ctx.arc(this.pos[0],this.pos[1],this.radius,this.direct +
-	  //     0.6*Math.PI,this.direct + 1.4*Math.PI, true);
-	  // ctx.lineTo(this.pos[0],this.pos[1]);
-	  // ctx.fill();
-	  // ctx.lineWidth = 1;
-	  // ctx.strokeStyle = 'white';
-	  // ctx.stroke();
 	};
 
 
@@ -312,14 +346,7 @@
 
 	Squirrel.prototype.turn = function (angle) {
 	  this.direct = angle + this.randomDirectOffset;
-	  // this.direct = this.direct % (Math.PI * 2);
-	  // console.log(this.direct);
-
 	};
-
-	// var xVel = impulse * Math.cos(this.direct) + this.vel[0];
-	// var yVel = impulse * Math.sin(this.direct) + this.vel[1];
-
 
 
 
@@ -335,11 +362,6 @@
 	  this.vel[1] = (Math.abs(yVel) > this.maxSpeed ? (this.maxSpeed * (yVel/Math.abs(yVel))) : yVel);
 
 
-	//follow
-	  // this.vel[0] = (SPEED + this.randomVelOffset) * Math.cos(this.direct);
-	  // this.vel[1] = (SPEED + this.randomVelOffset) * Math.sin(this.direct);
-
-
 	  this.pos[0] += this.vel[0];
 	  this.pos[1] += this.vel[1];
 
@@ -352,12 +374,126 @@
 
 
 /***/ },
+/* 3 */
+/***/ function(module, exports) {
+
+	  function getRandomIntInclusive(min, max) {
+	    return Math.floor(Math.random() * (max - min + 1)) + min;
+	  }
+
+	var Utils = {
+	  inherits: function (ChildClass, ParentClass) {
+	    function Surrogate() {}
+	    Surrogate.prototype = ParentClass.prototype;
+	    ChildClass.prototype = new Surrogate;
+	    ChildClass.prototype.constructor = ChildClass;
+
+
+	  },
+
+	  randomVect: function (length) {
+	    var randX = length * Math.random();
+	    var randY = Math.sqrt(Math.pow(length, 2) - Math.pow(randX, 2));
+	    randY = randY * [-1,1][getRandomIntInclusive(0,1)];
+	    randX = randX * [-1,1][getRandomIntInclusive(0,1)];
+	    return [randX,randY];
+	  },
+
+	  distanceBetween: function(pos1, pos2) {
+	    var xDistance = Math.abs(pos1[0] - pos2[0]);
+	    var yDistance = Math.abs(pos1[1] - pos2[1]);
+	    var tDistance = Math.sqrt(Math.pow(xDistance, 2) + Math.pow(yDistance, 2));
+	    return tDistance;
+	  }
+	};
+
+
+
+
+
+
+	module.exports = Utils;
+
+
+/***/ },
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var utils = __webpack_require__ (2);
-	var MovingObject = __webpack_require__ (1);
-	var Squirrel = __webpack_require__(3);
+	var utils = __webpack_require__ (3);
+
+
+	function MovingObject(options) {
+	  this.pos = options.pos;
+	  this.vel = options.vel;
+	  this.radius = options.radius;
+	  this.color = options.color;
+	  this.game = options.game;
+
+
+	}
+
+	MovingObject.prototype.draw = function(ctx) {
+	  ctx.fillStyle = this.color;
+	  ctx.beginPath();
+	  ctx.arc(this.pos[0],this.pos[1],this.radius,2*Math.PI,0, true);
+	  ctx.fill();
+	  ctx.lineWidth = 1;
+	  ctx.strokeStyle = 'white';
+	  ctx.stroke();
+	};
+
+	MovingObject.prototype.applyFriction = function (factor) {
+	  this.vel[0] -= this.vel[0] * factor;
+	  this.vel[1] -= this.vel[1] * factor;
+	};
+
+
+	MovingObject.prototype.move = function() {
+	  this.pos[0] += this.vel[0];
+	  this.pos[1] += this.vel[1];
+	};
+
+	MovingObject.prototype.wrap = function () {
+	  var outOfBounds = this.game.isOutOfBounds(this.pos, this.radius);
+	  if (outOfBounds === 'X') {
+	    this.vel[0] = this.vel[0] * -1;
+	    if (this.pos[0] > this.game.dimX / 2) {
+	      this.pos[0] = this.game.dimX - this.radius;
+	    } else {
+	      this.pos[0] = 0 + this.radius;
+	    }
+
+	  } else if (outOfBounds === 'Y') {
+	    this.vel[1] = this.vel[1] * -1;
+	    if (this.pos[1] > this.game.dimY / 2) {
+	      this.pos[1] = this.game.dimY - this.radius;
+	    } else {
+	      this.pos[1] = 0 + this.radius;
+	    }
+	  }
+	};
+
+	MovingObject.prototype.isCollidedWith = function(otherObject) {
+	  return utils.distanceBetween(this.pos, otherObject.pos) <
+	                              (this.radius + otherObject.radius);
+
+	};
+
+	MovingObject.prototype.collideWith = function (otherObject) {
+
+
+	};
+
+	 module.exports = MovingObject;
+
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var utils = __webpack_require__ (3);
+	var MovingObject = __webpack_require__ (4);
+	var Squirrel = __webpack_require__(2);
 
 	var COLOR = "rgba(0, 0, 0, 1.0)";
 	var RADIUS = 30;
@@ -379,8 +515,6 @@
 	    that.width = options.width;
 	    that.height = options.height;
 	    that.image = options.image;
-	    // that.frameIndex = 0;
-	    // that.tickCount = 0;
 	    that.ticksPerFrame = 4;
 
 	    that.render = function () {
@@ -398,7 +532,7 @@
 	    };
 
 	    that.update = function () {
-	      tickCount += 1;
+	      // tickCount += 1;
 	      if (tickCount > that.ticksPerFrame) {
 	        tickCount = 0;
 	        if (frameIndex < numberOfFrames - 1) {
@@ -420,7 +554,7 @@
 	  this.color = COLOR;
 	  this.pos = options.pos;
 	  this.direct = 0;
-	  this.lives = 3;
+	  this.lives = 1;
 
 	}
 	utils.inherits(Dog, MovingObject);
@@ -429,11 +563,14 @@
 	  this.vel = [0,0];
 	  this.pos = this.game.randPosition();
 	  this.lives--;
-
 	};
+
+
 	Dog.prototype.MAX_VELOCITY = 10;
 
 	Dog.prototype.power = function (impulse) {
+
+	  tickCount += 1;
 	  var xVel = impulse * Math.cos(this.direct) + this.vel[0];
 	  var yVel = impulse * Math.sin(this.direct) + this.vel[1];
 
@@ -447,49 +584,23 @@
 
 
 	Dog.prototype.draw = function(ctx) {
-
-	  var dogSpriteImage = sprite({
+	  if (!dogSpriteImage) var dogSpriteImage = sprite({
 	    context: ctx,
 	    width: 120,
 	    height: 40,
 	    image: dogSprite
 	});
-
-	  // ctx.drawImage(dogImage, this.pos[0], this.pos[1], RADIUS * 2, RADIUS * 2);
-
 	  ctx.translate(this.pos[0], this.pos[1]);
-
-	  // rotate around that point, converting our
-	  // angle from degrees to radians
 	  ctx.rotate(this.direct - Math.PI / 2);
-
 	  dogSpriteImage.render();
 	  dogSpriteImage.update();
-	  // draw it up and to the left by half the width
-	  // and height of the image
-	  // ctx.drawImage(dogImage, -RADIUS, -RADIUS, RADIUS * 2, RADIUS * 2);
-
-	  // and restore the co-ords to how they were when we began
-	 //  ctx.restore();
-	 ctx.setTransform(1,0,0,1,0,0);
-	 //
-	 //  ctx.fillStyle = this.color;
-	 //  ctx.beginPath();
-	 //  ctx.lineTo(this.pos[0],this.pos[1]);
-	 //  ctx.arc(this.pos[0],this.pos[1],this.radius,this.direct +
-	 //      0.6*Math.PI,this.direct + 1.4*Math.PI, true);
-	 //  ctx.lineTo(this.pos[0],this.pos[1]);
-	 //  ctx.fill();
-	 //  ctx.lineWidth = 1;
-	 //  ctx.strokeStyle = 'white';
-	 //  ctx.stroke();
+	  ctx.setTransform(1,0,0,1,0,0);
 	};
 
 	Dog.prototype.turn = function (angle) {
+	  tickCount += 1;
 	  this.direct += angle;
 	  this.direct = this.direct % (Math.PI * 2);
-
-
 	};
 
 
@@ -510,189 +621,86 @@
 
 
 /***/ },
-/* 5 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Squirrel = __webpack_require__(3);
-	var Dog = __webpack_require__(4);
-	var utils = __webpack_require__ (2);
-	var Acorn = __webpack_require__(8);
-	function Game(numSquirrels) {
-	  this.numSquirrels = numSquirrels;
-	  this.dimX = 1000;
-	  this.dimY = 600;
-	  this.squirrels = [];
-	  this.acorns = [];
-	  this.dog = new Dog({game: this, pos: this.randPosition()});
-	  this.points = 0;
-	}
-
-	Game.prototype.addSquirrels = function () {
-	  for (var i = 0; i < this.numSquirrels; i++) {
-	    this.squirrels.push(new Squirrel({pos: this.randPosition(), game: this}));
-	  }
-	};
-
-	Game.prototype.addAcorns = function() {
-	  if (this.acorns.length === 0) {
-	    this.acorns.push(new Acorn({pos: this.randPosition(), game: this}));
-	    this.acorns.push(new Acorn({pos: this.randPosition(), game: this}));
-	    this.addSquirrels();
-	  }
-	};
-
-	Game.prototype.randPosition = function() {
-	  return [Math.floor(this.dimX * Math.random()),
-	          Math.floor(this.dimY * Math.random())];
-	};
-
-	Game.prototype.draw = function (ctx) {
-	  ctx.clearRect(0,0,this.dimX , this.dimY + 50);
-	  for (var i = 0; i < this.allObjects().length; i++) {
-	    this.allObjects()[i].draw(ctx);
-	  }
-	  // this.drawBottom(ctx);
-	  // this.drawLives(ctx);
-	  this.drawPoints(ctx);
-
-	};
-
-	Game.prototype.drawPoints = function(ctx) {
-	  ctx.font="50px Courier";
-	  ctx.fillStyle = "black";
-	  ctx.fillText(this.points,this.dimX - (50 + (25 * this.points.toString().length)) , this.dimY + 40);
-
-	};
-
-	// Game.prototype.drawBottom = function(ctx) {
-	//   ctx.fillStyle = 'black';
-	//   ctx.strokeStyle = 'white';
-	//   ctx.lineWidth = 1;
-	//   ctx.rect(0,this.dimY,this.dimX, 50);
-	//   ctx.stroke();
-	//   ctx.fill();
-	// };
-
-	// Game.prototype.drawlife = function(ctx, offset) {
-	//   ctx.fillStyle = 'rgba(255, 255, 255, 0.0)';
-	//   ctx.strokeStyle = 'white';
-	//   ctx.lineWidth = 1;
-	//   ctx.beginPath();
-	//   ctx.lineTo(15 + offset,this.dimY + 25);
-	//   ctx.arc(15 + offset,this.dimY + 25,this.dog.radius,
-	//       0.6*Math.PI, 1.4*Math.PI, true);
-	//       ctx.fill();
-	//   ctx.lineTo(15 + offset,this.dimY + 25);
-	//   ctx.stroke();
-	// };
-	//
-	// Game.prototype.drawLives = function(ctx) {
-	//   for (var i = 0; i < this.dog.lives; i++) {
-	//     this.drawlife(ctx, i * 25);
-	//   }
-	// };
-
-
-
-	Game.prototype.moveObjects = function() {
-	  for (var i = 0; i < this.allMovingObjects().length; i++) {
-	    this.allMovingObjects()[i].move(this.dog.pos);
-	    this.allMovingObjects()[i].applyFriction(0.04);
-	    this.allMovingObjects()[i].wrap();
-	  }
-	};
-
-	Game.prototype.wrap = function (pos) {
-	  var xpos = pos[0] % this.dimX;
-	  var ypos = pos[1] % this.dimY;
-	  if (xpos < 0) xpos = this.dimX ;
-	  if (ypos < 0) ypos = this.dimY ;
-
-	  return [xpos, ypos];
-	};
-
-	Game.prototype.checkCollisons = function () {
-	  for (var i = this.allMovingObjects().length - 1; i >= 0; i--) {
-	    for(var j = i - 1; j >= 0; j--){
-	      if (this.objectsCollided(this.allMovingObjects()[i],this.allMovingObjects()[j])) {
-	        this.allMovingObjects()[i].collideWith(this.allMovingObjects()[j]);
-	      }
-	      if (this.objectsCollided(this.allMovingObjects()[j],this.allMovingObjects()[i])){
-	        this.allMovingObjects()[j].collideWith(this.allMovingObjects()[i]);
-	      }
-	    }
-	    for(var k = this.allStationaryObjects().length - 1; k >=0; k--) {
-	      if(this.objectsCollided(this.allMovingObjects()[i], this.allStationaryObjects()[k])) {
-	        this.allMovingObjects()[i].collideWith(this.allStationaryObjects()[k]);
-	      }
-	    }
-	  }
-	};
-
-	Game.prototype.objectsCollided = function (obj1, obj2) {
-	  return (obj1 && obj2 && obj1.isCollidedWith(obj2));
-	};
-
-
-
-	Game.prototype.step = function() {
-	  this.moveObjects();
-	  this.checkCollisons();
-	  this.addAcorns();
-	  // this.dog.applyFriction(0.03);
-	};
-
-
-	Game.prototype.remove = function(object) {
-	  if (object.toString() === 'Acorn') {
-	    this.acorns.splice(this.acorns.indexOf(object), 1);
-	    this.points += 1;
-	  }
-	};
-	Game.prototype.allMovingObjects = function() {
-	  return this.squirrels.concat(this.dog);
-	};
-
-	Game.prototype.allStationaryObjects = function() {
-	  return this.acorns;
-	};
-
-	Game.prototype.allObjects = function() {
-	  return this.allMovingObjects().concat(this.allStationaryObjects());
-	};
-
-	Game.prototype.isOutOfBounds = function (pos) {
-	    if ( pos[0] > this.dimX || pos[0] < 0 ) {
-	      return 'X';
-	    } else if (pos[1] > this.dimY || pos[1] < 0)  {
-	      return 'Y';
-	    }
-
-
-	};
-
-	Game.prototype.playerLoses = function () {
-	  return (this.dog.lives === 0);
-	};
-
-	Game.prototype.playerWins = function () {
-	  return (this.squirrels.length === 0);
-	};
-
-	Game.prototype.over = function () {
-	  return (this.playerLoses() || this.playerWins());
-	};
-
-
-	module.exports = Game;
-
-
-/***/ },
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Game = __webpack_require__(5);
-	var key = __webpack_require__(7);
+	var utils = __webpack_require__ (3);
+	var StationaryObject = __webpack_require__ (7);
+
+	var COLOR = "rgba(255,255,0, 1.0)";
+	var RADIUS = 10;
+
+	var acornImage = new Image();
+	acornImage.src = "./acorn.gif";
+
+	function Acorn (options) {
+	  this.pos = options.pos;
+	  this.radius = RADIUS;
+	  this.color = COLOR;
+	  this.game = options.game;
+	}
+
+	utils.inherits(Acorn, StationaryObject);
+
+	Acorn.prototype.toString = function() {
+	  return 'Acorn';
+	};
+
+	Acorn.prototype.draw = function(ctx) {
+	  ctx.drawImage(acornImage, this.pos[0] - RADIUS, this.pos[1] -RADIUS , RADIUS * 2, RADIUS * 2);
+	};
+
+
+	module.exports = Acorn;
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var utils = __webpack_require__ (3);
+
+
+	function StationaryObject(options) {
+	  this.pos = options.pos;
+	  this.radius = options.radius;
+	  this.color = options.color;
+	  this.game = options.game;
+
+	}
+
+	StationaryObject.prototype.draw = function(ctx) {
+	  ctx.fillStyle = this.color;
+	  ctx.beginPath();
+	  ctx.arc(this.pos[0],this.pos[1],this.radius,2*Math.PI,0, true);
+	  ctx.fill();
+	  ctx.lineWidth = 1;
+	  ctx.strokeStyle = 'white';
+	  ctx.stroke();
+	};
+
+
+
+	StationaryObject.prototype.isCollidedWith = function(otherObject) {
+	  return utils.distanceBetween(this.pos, otherObject.pos) <
+	                              (this.radius + otherObject.radius);
+
+	};
+
+	StationaryObject.prototype.collideWith = function (otherObject) {
+
+
+	};
+
+	 module.exports = StationaryObject;
+
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Game = __webpack_require__(1);
+	var key = __webpack_require__(9);
 
 	function GameView(ctx,game) {
 	  this.game = game;
@@ -721,7 +729,8 @@
 
 	  this.ctx.font="50px Courier";
 	  this.ctx.fillStyle = "white";
-	  this.ctx.fillText('Game Over!', this.game.dimX / 3, this.game.dimY / 2);
+	  if (this.game.points <= 6) this.ctx.fillText('That was ruff!', this.game.dimX / 3, this.game.dimY / 2);
+	  if (this.game.points > 6) this.ctx.fillText('Good boy!', this.game.dimX / 3, this.game.dimY / 2);
 	  this.ctx.fillText('You scored ' + this.game.points + ' points!', this.game.dimX / 5, this.game.dimY / 2 + 50);
 
 	};
@@ -732,18 +741,24 @@
 	    this.dog.turn(Math.PI/32);
 	  }
 	  if (key.isPressed('up')) {
-	    this.dog.power(0.3);
+	    this.dog.power(0.8);
+	  }
+	  if (key.isPressed('down')) {
+	    this.dog.power(-0.8);
 	  }
 	  if (key.isPressed('left')) {
 	    this.dog.turn(-Math.PI/32);
 	  }
+	  // if ((!key.isPressed('up')) && (!key.isPressed('down'))) {
+	  //   this.dog.;
+	  // }
 	};
 
 	module.exports = GameView;
 
 
 /***/ },
-/* 7 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//     keymaster.js
@@ -1042,81 +1057,6 @@
 	  if(true) module.exports = assignKey;
 
 	})(this);
-
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var utils = __webpack_require__ (2);
-	var StationaryObject = __webpack_require__ (9);
-
-	var COLOR = "rgba(255,255,0, 1.0)";
-	var RADIUS = 10;
-
-	var acornImage = new Image();
-	acornImage.src = "./acorn.gif";
-
-	function Acorn (options) {
-	  this.pos = options.pos;
-	  this.radius = RADIUS;
-	  this.color = COLOR;
-	  this.game = options.game;
-	}
-
-	utils.inherits(Acorn, StationaryObject);
-
-	Acorn.prototype.toString = function() {
-	  return 'Acorn';
-	};
-
-	Acorn.prototype.draw = function(ctx) {
-	  ctx.drawImage(acornImage, this.pos[0] - RADIUS, this.pos[1] -RADIUS , RADIUS * 2, RADIUS * 2);
-	};
-
-
-	module.exports = Acorn;
-
-
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var utils = __webpack_require__ (2);
-
-
-	function StationaryObject(options) {
-	  this.pos = options.pos;
-	  this.radius = options.radius;
-	  this.color = options.color;
-	  this.game = options.game;
-
-	}
-
-	StationaryObject.prototype.draw = function(ctx) {
-	  ctx.fillStyle = this.color;
-	  ctx.beginPath();
-	  ctx.arc(this.pos[0],this.pos[1],this.radius,2*Math.PI,0, true);
-	  ctx.fill();
-	  ctx.lineWidth = 1;
-	  ctx.strokeStyle = 'white';
-	  ctx.stroke();
-	};
-
-
-
-	StationaryObject.prototype.isCollidedWith = function(otherObject) {
-	  return utils.distanceBetween(this.pos, otherObject.pos) <
-	                              (this.radius + otherObject.radius);
-
-	};
-
-	StationaryObject.prototype.collideWith = function (otherObject) {
-
-
-	};
-
-	 module.exports = StationaryObject;
 
 
 /***/ }

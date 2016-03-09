@@ -22,8 +22,6 @@ function sprite (options) {
     that.width = options.width;
     that.height = options.height;
     that.image = options.image;
-    // that.frameIndex = 0;
-    // that.tickCount = 0;
     that.ticksPerFrame = 4;
 
     that.render = function () {
@@ -41,7 +39,7 @@ function sprite (options) {
     };
 
     that.update = function () {
-      tickCount += 1;
+      // tickCount += 1;
       if (tickCount > that.ticksPerFrame) {
         tickCount = 0;
         if (frameIndex < numberOfFrames - 1) {
@@ -63,7 +61,7 @@ function Dog (options) {
   this.color = COLOR;
   this.pos = options.pos;
   this.direct = 0;
-  this.lives = 3;
+  this.lives = 1;
 
 }
 utils.inherits(Dog, MovingObject);
@@ -72,11 +70,14 @@ Dog.prototype.relocate = function () {
   this.vel = [0,0];
   this.pos = this.game.randPosition();
   this.lives--;
-
 };
+
+
 Dog.prototype.MAX_VELOCITY = 10;
 
 Dog.prototype.power = function (impulse) {
+
+  tickCount += 1;
   var xVel = impulse * Math.cos(this.direct) + this.vel[0];
   var yVel = impulse * Math.sin(this.direct) + this.vel[1];
 
@@ -90,49 +91,23 @@ Dog.prototype.power = function (impulse) {
 
 
 Dog.prototype.draw = function(ctx) {
-
-  var dogSpriteImage = sprite({
+  if (!dogSpriteImage) var dogSpriteImage = sprite({
     context: ctx,
     width: 120,
     height: 40,
     image: dogSprite
 });
-
-  // ctx.drawImage(dogImage, this.pos[0], this.pos[1], RADIUS * 2, RADIUS * 2);
-
   ctx.translate(this.pos[0], this.pos[1]);
-
-  // rotate around that point, converting our
-  // angle from degrees to radians
   ctx.rotate(this.direct - Math.PI / 2);
-
   dogSpriteImage.render();
   dogSpriteImage.update();
-  // draw it up and to the left by half the width
-  // and height of the image
-  // ctx.drawImage(dogImage, -RADIUS, -RADIUS, RADIUS * 2, RADIUS * 2);
-
-  // and restore the co-ords to how they were when we began
- //  ctx.restore();
- ctx.setTransform(1,0,0,1,0,0);
- //
- //  ctx.fillStyle = this.color;
- //  ctx.beginPath();
- //  ctx.lineTo(this.pos[0],this.pos[1]);
- //  ctx.arc(this.pos[0],this.pos[1],this.radius,this.direct +
- //      0.6*Math.PI,this.direct + 1.4*Math.PI, true);
- //  ctx.lineTo(this.pos[0],this.pos[1]);
- //  ctx.fill();
- //  ctx.lineWidth = 1;
- //  ctx.strokeStyle = 'white';
- //  ctx.stroke();
+  ctx.setTransform(1,0,0,1,0,0);
 };
 
 Dog.prototype.turn = function (angle) {
+  tickCount += 1;
   this.direct += angle;
   this.direct = this.direct % (Math.PI * 2);
-
-
 };
 
 

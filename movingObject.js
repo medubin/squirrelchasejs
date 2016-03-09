@@ -8,6 +8,7 @@ function MovingObject(options) {
   this.color = options.color;
   this.game = options.game;
 
+
 }
 
 MovingObject.prototype.draw = function(ctx) {
@@ -32,11 +33,22 @@ MovingObject.prototype.move = function() {
 };
 
 MovingObject.prototype.wrap = function () {
-  var outOfBounds = this.game.isOutOfBounds(this.pos);
+  var outOfBounds = this.game.isOutOfBounds(this.pos, this.radius);
   if (outOfBounds === 'X') {
-      this.vel[0] = this.vel[0] * -1;
+    this.vel[0] = this.vel[0] * -1;
+    if (this.pos[0] > this.game.dimX / 2) {
+      this.pos[0] = this.game.dimX - this.radius;
+    } else {
+      this.pos[0] = 0 + this.radius;
+    }
+
   } else if (outOfBounds === 'Y') {
-      this.vel[1] = this.vel[1] * -1;
+    this.vel[1] = this.vel[1] * -1;
+    if (this.pos[1] > this.game.dimY / 2) {
+      this.pos[1] = this.game.dimY - this.radius;
+    } else {
+      this.pos[1] = 0 + this.radius;
+    }
   }
 };
 

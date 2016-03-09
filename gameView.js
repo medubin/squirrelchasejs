@@ -28,7 +28,8 @@ GameView.prototype.renderLose = function () {
 
   this.ctx.font="50px Courier";
   this.ctx.fillStyle = "white";
-  this.ctx.fillText('Game Over!', this.game.dimX / 3, this.game.dimY / 2);
+  if (this.game.points <= 6) this.ctx.fillText('That was ruff!', this.game.dimX / 3, this.game.dimY / 2);
+  if (this.game.points > 6) this.ctx.fillText('Good boy!', this.game.dimX / 3, this.game.dimY / 2);
   this.ctx.fillText('You scored ' + this.game.points + ' points!', this.game.dimX / 5, this.game.dimY / 2 + 50);
 
 };
@@ -39,11 +40,17 @@ GameView.prototype.checkKey = function () {
     this.dog.turn(Math.PI/32);
   }
   if (key.isPressed('up')) {
-    this.dog.power(0.3);
+    this.dog.power(0.8);
+  }
+  if (key.isPressed('down')) {
+    this.dog.power(-0.8);
   }
   if (key.isPressed('left')) {
     this.dog.turn(-Math.PI/32);
   }
+  // if ((!key.isPressed('up')) && (!key.isPressed('down'))) {
+  //   this.dog.;
+  // }
 };
 
 module.exports = GameView;

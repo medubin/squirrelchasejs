@@ -1,10 +1,10 @@
-var MovingObject = require ("./movingObject");
+// var MovingObject = require ("./movingObject");
 
-var Util = require ("./utils");
-var Squirrel = require("./squirrel");
+// var Util = require ("./utils");
+// var Squirrel = require("./squirrel");
 var Game = require("./game");
 var GameView = require("./gameView");
-var Dog = require("./dog");
+// var Dog = require("./dog");
 
 
 
@@ -14,6 +14,6 @@ var game = new Game(2);
 var gameView = new GameView(ctx,game);
 
 canvas.width  = game.dimX;
-canvas.height = game.dimY + 50;
+canvas.height = game.dimY;
 
 gameView.start();
