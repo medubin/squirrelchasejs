@@ -54,7 +54,7 @@ MovingObject.prototype.wrap = function () {
 
 MovingObject.prototype.isCollidedWith = function(otherObject) {
   return utils.distanceBetween(this.pos, otherObject.pos) <
-                              (this.radius + otherObject.radius);
+                              ((this.radius + otherObject.radius)/2);
 
 };
 

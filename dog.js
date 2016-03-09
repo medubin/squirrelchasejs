@@ -6,11 +6,11 @@ var COLOR = "rgba(0, 0, 0, 1.0)";
 var RADIUS = 30;
 var SPEED = [0,0];
 var DIRECTION = 0;
-var dogImage = new Image();
-dogImage.src = "./dog.gif";
+// var dogImage = new Image();
+// dogImage.src = "./dog.gif";
 
 var dogSprite = new Image();
-dogSprite.src = "./dog_sprites.gif";
+dogSprite.src = "./dog_sprites" + Math.floor(Math.random() * (3)) + ".gif";
 
 var tickCount = 0;
 var frameIndex = 0;
@@ -102,6 +102,15 @@ Dog.prototype.draw = function(ctx) {
   dogSpriteImage.render();
   dogSpriteImage.update();
   ctx.setTransform(1,0,0,1,0,0);
+
+
+  ctx.beginPath();
+  ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'white';
+  ctx.stroke();
+
+
 };
 
 Dog.prototype.turn = function (angle) {
@@ -118,8 +127,9 @@ Dog.prototype.collideWith = function (otherObject) {
     this.relocate();
   } else if (otherObject.toString() === 'Acorn') {
     this.game.remove(otherObject);
-
-
+  } else if (otherObject.toString() === 'Bush') {
+    this.vel[0] = this.vel[0]/2;
+    this.vel[1] = this.vel[1]/2;
   }
 };
 

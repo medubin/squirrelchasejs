@@ -73,20 +73,29 @@
 	var Dog = __webpack_require__(5);
 	var utils = __webpack_require__ (3);
 	var Acorn = __webpack_require__(6);
+	var Bush = __webpack_require__(10);
 	function Game(numSquirrels) {
 	  this.numSquirrels = numSquirrels;
 	  this.dimX = 1000;
 	  this.dimY = 600;
 	  this.squirrels = [];
 	  this.acorns = [];
+	  this.bushes = [];
 	  this.dog = new Dog({game: this, pos: [this.dimX/2, this.dimY/2]});
 	  this.points = 0;
+	  this.addBushes();
 	}
 
 	Game.prototype.addSquirrels = function () {
 	  for (var i = 0; i < this.numSquirrels; i++) {
 	    this.squirrels.push(new Squirrel({pos: this.randSquirrelPosition(), game: this}));
 	  }
+	};
+
+	Game.prototype.addBushes = function() {
+	  this.bushes.push(new Bush({pos: this.randPosition(), game: this}));
+	  this.bushes.push(new Bush({pos: this.randPosition(), game: this}));
+	  this.bushes.push(new Bush({pos: this.randPosition(), game: this}));
 	};
 
 	Game.prototype.addAcorns = function() {
@@ -191,7 +200,7 @@
 	};
 
 	Game.prototype.allStationaryObjects = function() {
-	  return this.acorns;
+	  return this.acorns.concat(this.bushes);
 	};
 
 	Game.prototype.allObjects = function() {
@@ -237,8 +246,8 @@
 	var SPEED = 3;
 
 
-	var squirrelImage = new Image();
-	squirrelImage.src = "./squirrel.png";
+	// var squirrelImage = new Image();
+	// squirrelImage.src = "./squirrel.png";
 
 
 	var squirrelSprite = new Image();
@@ -298,19 +307,23 @@
 	  this.color = COLOR;
 	  this.direct = 0;
 	  this.randomDirectOffset = (Math.random() - 0.5) * 2;
-	  this.maxSpeed = SPEED + (Math.random()) * 1.5;
+	  this.maxSpeed = SPEED + (Math.random()) * 1.3;
 	  this.dazed = 0;
 	}
 	utils.inherits(Squirrel, MovingObject);
 
 
 	Squirrel.prototype.collideWith = function (otherObject, tempVel) {
-	  if (otherObject.toString() === 'Squirrel') {
-	    this.vel = otherObject.vel;
-	    if (tempVel) this.vel = tempVel;
-	    // this.vel[0] = this.vel[0] * -1;
-	    // this.vel[1] = this.vel[1] * -1;
+	  if (otherObject.toString() === 'Bush') {
+	    this.vel[0] = this.vel[0] * 2/3;
+	    this.vel[1] = this.vel[1] * 2/3;
 	  }
+	  // if (otherObject.toString() === 'Squirrel') {
+	  //   this.vel = otherObject.vel;
+	  //   if (tempVel) this.vel = tempVel;
+
+
+	  // }
 	};
 
 
@@ -330,6 +343,13 @@
 	  squirrelSpriteImage.render();
 	  squirrelSpriteImage.update();
 	  ctx.setTransform(1,0,0,1,0,0);
+
+	  ctx.beginPath();
+	  ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+	  ctx.lineWidth = 1;
+	  ctx.strokeStyle = 'white';
+	  ctx.stroke();
+
 	};
 
 
@@ -475,7 +495,7 @@
 
 	MovingObject.prototype.isCollidedWith = function(otherObject) {
 	  return utils.distanceBetween(this.pos, otherObject.pos) <
-	                              (this.radius + otherObject.radius);
+	                              ((this.radius + otherObject.radius)/2);
 
 	};
 
@@ -499,11 +519,11 @@
 	var RADIUS = 30;
 	var SPEED = [0,0];
 	var DIRECTION = 0;
-	var dogImage = new Image();
-	dogImage.src = "./dog.gif";
+	// var dogImage = new Image();
+	// dogImage.src = "./dog.gif";
 
 	var dogSprite = new Image();
-	dogSprite.src = "./dog_sprites.gif";
+	dogSprite.src = "./dog_sprites" + Math.floor(Math.random() * (3)) + ".gif";
 
 	var tickCount = 0;
 	var frameIndex = 0;
@@ -595,6 +615,15 @@
 	  dogSpriteImage.render();
 	  dogSpriteImage.update();
 	  ctx.setTransform(1,0,0,1,0,0);
+
+
+	  ctx.beginPath();
+	  ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+	  ctx.lineWidth = 1;
+	  ctx.strokeStyle = 'white';
+	  ctx.stroke();
+
+
 	};
 
 	Dog.prototype.turn = function (angle) {
@@ -611,8 +640,9 @@
 	    this.relocate();
 	  } else if (otherObject.toString() === 'Acorn') {
 	    this.game.remove(otherObject);
-
-
+	  } else if (otherObject.toString() === 'Bush') {
+	    this.vel[0] = this.vel[0]/2;
+	    this.vel[1] = this.vel[1]/2;
 	  }
 	};
 
@@ -628,7 +658,7 @@
 	var StationaryObject = __webpack_require__ (7);
 
 	var COLOR = "rgba(255,255,0, 1.0)";
-	var RADIUS = 10;
+	var RADIUS = 30;
 
 	var acornImage = new Image();
 	acornImage.src = "./acorn.gif";
@@ -647,7 +677,14 @@
 	};
 
 	Acorn.prototype.draw = function(ctx) {
-	  ctx.drawImage(acornImage, this.pos[0] - RADIUS, this.pos[1] -RADIUS , RADIUS * 2, RADIUS * 2);
+	  ctx.drawImage(acornImage, this.pos[0]- 1/3*RADIUS , this.pos[1]- 1/3*RADIUS , RADIUS * 2/3, RADIUS * 2/3);
+	  ctx.beginPath();
+	  ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+	  ctx.lineWidth = 1;
+	  ctx.strokeStyle = 'white';
+	  ctx.stroke();
+
+
 	};
 
 
@@ -730,7 +767,8 @@
 	  this.ctx.font="50px Courier";
 	  this.ctx.fillStyle = "white";
 	  if (this.game.points <= 6) this.ctx.fillText('That was ruff!', this.game.dimX / 3, this.game.dimY / 2);
-	  if (this.game.points > 6) this.ctx.fillText('Good boy!', this.game.dimX / 3, this.game.dimY / 2);
+	  if (this.game.points > 6 && this.game.points <= 12) this.ctx.fillText('Doggonit!', this.game.dimX / 3, this.game.dimY / 2);
+	  if (this.game.points > 12) this.ctx.fillText('Good boy!', this.game.dimX / 3, this.game.dimY / 2);
 	  this.ctx.fillText('You scored ' + this.game.points + ' points!', this.game.dimX / 5, this.game.dimY / 2 + 50);
 
 	};
@@ -1057,6 +1095,47 @@
 	  if(true) module.exports = assignKey;
 
 	})(this);
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var utils = __webpack_require__ (3);
+	var StationaryObject = __webpack_require__ (7);
+
+	var COLOR = "rgba(255,255,0, 1.0)";
+	var RADIUS = 60;
+
+	var bushImage = new Image();
+	bushImage.src = "./bush.gif";
+
+	function Bush (options) {
+	  this.pos = options.pos;
+	  this.radius = RADIUS;
+	  this.color = COLOR;
+	  this.game = options.game;
+	}
+
+	utils.inherits(Bush, StationaryObject);
+
+	Bush.prototype.toString = function() {
+	  return 'Bush';
+	};
+
+	Bush.prototype.draw = function(ctx) {
+	  ctx.drawImage(bushImage, this.pos[0]- 1/2*RADIUS , this.pos[1]- 1/2*RADIUS , RADIUS, RADIUS);
+	  ctx.beginPath();
+	  ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+	  ctx.lineWidth = 1;
+	  ctx.strokeStyle = 'white';
+	  ctx.stroke();
+
+
+	};
+
+
+	module.exports = Bush;
 
 
 /***/ }

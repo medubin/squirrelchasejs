@@ -7,8 +7,8 @@ var RADIUS = 15;
 var SPEED = 3;
 
 
-var squirrelImage = new Image();
-squirrelImage.src = "./squirrel.png";
+// var squirrelImage = new Image();
+// squirrelImage.src = "./squirrel.png";
 
 
 var squirrelSprite = new Image();
@@ -68,19 +68,23 @@ function Squirrel (options) {
   this.color = COLOR;
   this.direct = 0;
   this.randomDirectOffset = (Math.random() - 0.5) * 2;
-  this.maxSpeed = SPEED + (Math.random()) * 1.5;
+  this.maxSpeed = SPEED + (Math.random()) * 1.3;
   this.dazed = 0;
 }
 utils.inherits(Squirrel, MovingObject);
 
 
 Squirrel.prototype.collideWith = function (otherObject, tempVel) {
-  if (otherObject.toString() === 'Squirrel') {
-    this.vel = otherObject.vel;
-    if (tempVel) this.vel = tempVel;
-    // this.vel[0] = this.vel[0] * -1;
-    // this.vel[1] = this.vel[1] * -1;
+  if (otherObject.toString() === 'Bush') {
+    this.vel[0] = this.vel[0] * 2/3;
+    this.vel[1] = this.vel[1] * 2/3;
   }
+  // if (otherObject.toString() === 'Squirrel') {
+  //   this.vel = otherObject.vel;
+  //   if (tempVel) this.vel = tempVel;
+
+
+  // }
 };
 
 
@@ -100,6 +104,13 @@ Squirrel.prototype.draw = function(ctx) {
   squirrelSpriteImage.render();
   squirrelSpriteImage.update();
   ctx.setTransform(1,0,0,1,0,0);
+
+  ctx.beginPath();
+  ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'white';
+  ctx.stroke();
+
 };
 
 

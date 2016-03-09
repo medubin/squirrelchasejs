@@ -29,7 +29,8 @@ GameView.prototype.renderLose = function () {
   this.ctx.font="50px Courier";
   this.ctx.fillStyle = "white";
   if (this.game.points <= 6) this.ctx.fillText('That was ruff!', this.game.dimX / 3, this.game.dimY / 2);
-  if (this.game.points > 6) this.ctx.fillText('Good boy!', this.game.dimX / 3, this.game.dimY / 2);
+  if (this.game.points > 6 && this.game.points <= 12) this.ctx.fillText('Doggonit!', this.game.dimX / 3, this.game.dimY / 2);
+  if (this.game.points > 12) this.ctx.fillText('Good boy!', this.game.dimX / 3, this.game.dimY / 2);
   this.ctx.fillText('You scored ' + this.game.points + ' points!', this.game.dimX / 5, this.game.dimY / 2 + 50);
 
 };

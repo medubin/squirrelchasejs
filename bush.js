@@ -2,26 +2,26 @@ var utils = require ("./utils");
 var StationaryObject = require ("./stationaryObject");
 
 var COLOR = "rgba(255,255,0, 1.0)";
-var RADIUS = 30;
+var RADIUS = 60;
 
-var acornImage = new Image();
-acornImage.src = "./acorn.gif";
+var bushImage = new Image();
+bushImage.src = "./bush.gif";
 
-function Acorn (options) {
+function Bush (options) {
   this.pos = options.pos;
   this.radius = RADIUS;
   this.color = COLOR;
   this.game = options.game;
 }
 
-utils.inherits(Acorn, StationaryObject);
+utils.inherits(Bush, StationaryObject);
 
-Acorn.prototype.toString = function() {
-  return 'Acorn';
+Bush.prototype.toString = function() {
+  return 'Bush';
 };
 
-Acorn.prototype.draw = function(ctx) {
-  ctx.drawImage(acornImage, this.pos[0]- 1/3*RADIUS , this.pos[1]- 1/3*RADIUS , RADIUS * 2/3, RADIUS * 2/3);
+Bush.prototype.draw = function(ctx) {
+  ctx.drawImage(bushImage, this.pos[0]- 1/2*RADIUS , this.pos[1]- 1/2*RADIUS , RADIUS, RADIUS);
   ctx.beginPath();
   ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
   ctx.lineWidth = 1;
@@ -32,4 +32,4 @@ Acorn.prototype.draw = function(ctx) {
 };
 
 
-module.exports = Acorn;
+module.exports = Bush;

@@ -2,20 +2,29 @@ var Squirrel = require('./squirrel');
 var Dog = require('./dog');
 var utils = require ("./utils");
 var Acorn = require('./acorn');
+var Bush = require('./bush');
 function Game(numSquirrels) {
   this.numSquirrels = numSquirrels;
   this.dimX = 1000;
   this.dimY = 600;
   this.squirrels = [];
   this.acorns = [];
+  this.bushes = [];
   this.dog = new Dog({game: this, pos: [this.dimX/2, this.dimY/2]});
   this.points = 0;
+  this.addBushes();
 }
 
 Game.prototype.addSquirrels = function () {
   for (var i = 0; i < this.numSquirrels; i++) {
     this.squirrels.push(new Squirrel({pos: this.randSquirrelPosition(), game: this}));
   }
+};
+
+Game.prototype.addBushes = function() {
+  this.bushes.push(new Bush({pos: this.randPosition(), game: this}));
+  this.bushes.push(new Bush({pos: this.randPosition(), game: this}));
+  this.bushes.push(new Bush({pos: this.randPosition(), game: this}));
 };
 
 Game.prototype.addAcorns = function() {
@@ -120,7 +129,7 @@ Game.prototype.allMovingObjects = function() {
 };
 
 Game.prototype.allStationaryObjects = function() {
-  return this.acorns;
+  return this.acorns.concat(this.bushes);
 };
 
 Game.prototype.allObjects = function() {
