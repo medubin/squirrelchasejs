@@ -20,11 +20,16 @@ StationaryObject.prototype.draw = function(ctx) {
 };
 
 
+
 StationaryObject.prototype.isCollidedWith = function(otherObject) {
   return utils.distanceBetween(this.pos, otherObject.pos) <
                               (this.radius + otherObject.radius);
 
 };
 
+StationaryObject.prototype.collideWith = function (otherObject) {
+
+
+};
 
  module.exports = StationaryObject;

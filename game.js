@@ -36,46 +36,46 @@ Game.prototype.draw = function (ctx) {
   for (var i = 0; i < this.allObjects().length; i++) {
     this.allObjects()[i].draw(ctx);
   }
-  this.drawBottom(ctx);
-  this.drawLives(ctx);
+  // this.drawBottom(ctx);
+  // this.drawLives(ctx);
   this.drawPoints(ctx);
 
 };
 
 Game.prototype.drawPoints = function(ctx) {
   ctx.font="50px Courier";
-  ctx.fillStyle = "white";
+  ctx.fillStyle = "black";
   ctx.fillText(this.points,this.dimX - (50 + (25 * this.points.toString().length)) , this.dimY + 40);
 
 };
 
-Game.prototype.drawBottom = function(ctx) {
-  ctx.fillStyle = 'black';
-  ctx.strokeStyle = 'white';
-  ctx.lineWidth = 1;
-  ctx.rect(0,this.dimY,this.dimX, 50);
-  ctx.stroke();
-  ctx.fill();
-};
+// Game.prototype.drawBottom = function(ctx) {
+//   ctx.fillStyle = 'black';
+//   ctx.strokeStyle = 'white';
+//   ctx.lineWidth = 1;
+//   ctx.rect(0,this.dimY,this.dimX, 50);
+//   ctx.stroke();
+//   ctx.fill();
+// };
 
-Game.prototype.drawlife = function(ctx, offset) {
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.0)';
-  ctx.strokeStyle = 'white';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.lineTo(15 + offset,this.dimY + 25);
-  ctx.arc(15 + offset,this.dimY + 25,this.dog.radius,
-      0.6*Math.PI, 1.4*Math.PI, true);
-      ctx.fill();
-  ctx.lineTo(15 + offset,this.dimY + 25);
-  ctx.stroke();
-};
-
-Game.prototype.drawLives = function(ctx) {
-  for (var i = 0; i < this.dog.lives; i++) {
-    this.drawlife(ctx, i * 25);
-  }
-};
+// Game.prototype.drawlife = function(ctx, offset) {
+//   ctx.fillStyle = 'rgba(255, 255, 255, 0.0)';
+//   ctx.strokeStyle = 'white';
+//   ctx.lineWidth = 1;
+//   ctx.beginPath();
+//   ctx.lineTo(15 + offset,this.dimY + 25);
+//   ctx.arc(15 + offset,this.dimY + 25,this.dog.radius,
+//       0.6*Math.PI, 1.4*Math.PI, true);
+//       ctx.fill();
+//   ctx.lineTo(15 + offset,this.dimY + 25);
+//   ctx.stroke();
+// };
+//
+// Game.prototype.drawLives = function(ctx) {
+//   for (var i = 0; i < this.dog.lives; i++) {
+//     this.drawlife(ctx, i * 25);
+//   }
+// };
 
 
 

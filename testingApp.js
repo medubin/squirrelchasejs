@@ -176,8 +176,62 @@
 	var Dog = __webpack_require__(4);
 
 	var COLOR = "rgba(139,69,19, 1.0)";
-	var RADIUS = 10;
+	var RADIUS = 15;
 	var SPEED = 3;
+
+
+	var squirrelImage = new Image();
+	squirrelImage.src = "./squirrel.png";
+
+
+	var squirrelSprite = new Image();
+	squirrelSprite.src = "./squirre_sprites.png";
+
+	var tickCount = 0;
+	var frameIndex = 0;
+	var numberOfFrames = 3;
+
+	function sprite (options) {
+	    var that = {};
+	    that.context = options.context;
+	    that.width = options.width;
+	    that.height = options.height;
+	    that.image = options.image;
+	    // that.frameIndex = 0;
+	    // that.tickCount = 0;
+	    that.ticksPerFrame = 4;
+
+	    that.render = function () {
+	        that.context.drawImage(
+	           that.image,
+	           frameIndex * that.width / 3,
+	           0,
+	           that.width / 3,
+	           that.height,
+	           -RADIUS,
+	           -RADIUS,
+	           RADIUS * 2,
+	           RADIUS * 2
+	         );
+	    };
+
+	    that.update = function () {
+	      tickCount += 1;
+	      if (tickCount > that.ticksPerFrame) {
+	        tickCount = 0;
+	        if (frameIndex < numberOfFrames - 1) {
+	          frameIndex += 1;
+	          } else {
+	          frameIndex = 0;
+	          }
+	        }
+	    };
+	    return that;
+	}
+
+
+
+
 
 	function Squirrel (options) {
 	  this.pos = options.pos;
@@ -204,16 +258,44 @@
 
 
 	Squirrel.prototype.draw = function(ctx) {
-	  ctx.fillStyle = this.color;
-	  ctx.beginPath();
-	  ctx.lineTo(this.pos[0],this.pos[1]);
-	  ctx.arc(this.pos[0],this.pos[1],this.radius,this.direct +
-	      0.6*Math.PI,this.direct + 1.4*Math.PI, true);
-	  ctx.lineTo(this.pos[0],this.pos[1]);
-	  ctx.fill();
-	  ctx.lineWidth = 1;
-	  ctx.strokeStyle = 'white';
-	  ctx.stroke();
+	  var squirrelSpriteImage = sprite({
+	    context: ctx,
+	    width: 96,
+	    height: 32,
+	    image: squirrelSprite
+	});
+
+
+	  // ctx.save();
+
+	   // move to the middle of where we want to draw our image
+	   ctx.translate(this.pos[0], this.pos[1]);
+
+	   // rotate around that point, converting our
+	   // angle from degrees to radians
+	   ctx.rotate(this.direct - Math.PI / 2);
+
+	   // draw it up and to the left by half the width
+	   // and height of the image
+	   squirrelSpriteImage.render();
+	   squirrelSpriteImage.update();
+	  //  ctx.drawImage(squirrelImage, -RADIUS, -RADIUS, RADIUS * 2, RADIUS * 2);
+
+	   // and restore the co-ords to how they were when we began
+	  //  ctx.restore();
+	  ctx.setTransform(1,0,0,1,0,0);
+
+
+	  // ctx.fillStyle = this.color;
+	  // ctx.beginPath();
+	  // ctx.lineTo(this.pos[0],this.pos[1]);
+	  // ctx.arc(this.pos[0],this.pos[1],this.radius,this.direct +
+	  //     0.6*Math.PI,this.direct + 1.4*Math.PI, true);
+	  // ctx.lineTo(this.pos[0],this.pos[1]);
+	  // ctx.fill();
+	  // ctx.lineWidth = 1;
+	  // ctx.strokeStyle = 'white';
+	  // ctx.stroke();
 	};
 
 
@@ -278,9 +360,57 @@
 	var Squirrel = __webpack_require__(3);
 
 	var COLOR = "rgba(0, 0, 0, 1.0)";
-	var RADIUS = 15;
+	var RADIUS = 30;
 	var SPEED = [0,0];
 	var DIRECTION = 0;
+	var dogImage = new Image();
+	dogImage.src = "./dog.gif";
+
+	var dogSprite = new Image();
+	dogSprite.src = "./dog_sprites.gif";
+
+	var tickCount = 0;
+	var frameIndex = 0;
+	var numberOfFrames = 3;
+
+	function sprite (options) {
+	    var that = {};
+	    that.context = options.context;
+	    that.width = options.width;
+	    that.height = options.height;
+	    that.image = options.image;
+	    // that.frameIndex = 0;
+	    // that.tickCount = 0;
+	    that.ticksPerFrame = 4;
+
+	    that.render = function () {
+	        that.context.drawImage(
+	           that.image,
+	           frameIndex * that.width / 3,
+	           0,
+	           that.width / 3,
+	           that.height,
+	           -RADIUS,
+	           -RADIUS,
+	           RADIUS * 2,
+	           RADIUS * 2
+	         );
+	    };
+
+	    that.update = function () {
+	      tickCount += 1;
+	      if (tickCount > that.ticksPerFrame) {
+	        tickCount = 0;
+	        if (frameIndex < numberOfFrames - 1) {
+	          frameIndex += 1;
+	          } else {
+	          frameIndex = 0;
+	          }
+	        }
+	    };
+	    return that;
+	}
+
 
 
 	function Dog (options) {
@@ -302,6 +432,7 @@
 
 	};
 	Dog.prototype.MAX_VELOCITY = 10;
+
 	Dog.prototype.power = function (impulse) {
 	  var xVel = impulse * Math.cos(this.direct) + this.vel[0];
 	  var yVel = impulse * Math.sin(this.direct) + this.vel[1];
@@ -316,20 +447,48 @@
 
 
 	Dog.prototype.draw = function(ctx) {
-	  ctx.fillStyle = this.color;
-	  ctx.beginPath();
-	  ctx.lineTo(this.pos[0],this.pos[1]);
-	  ctx.arc(this.pos[0],this.pos[1],this.radius,this.direct +
-	      0.6*Math.PI,this.direct + 1.4*Math.PI, true);
-	  ctx.lineTo(this.pos[0],this.pos[1]);
-	  ctx.fill();
-	  ctx.lineWidth = 1;
-	  ctx.strokeStyle = 'white';
-	  ctx.stroke();
+
+	  var dogSpriteImage = sprite({
+	    context: ctx,
+	    width: 120,
+	    height: 40,
+	    image: dogSprite
+	});
+
+	  // ctx.drawImage(dogImage, this.pos[0], this.pos[1], RADIUS * 2, RADIUS * 2);
+
+	  ctx.translate(this.pos[0], this.pos[1]);
+
+	  // rotate around that point, converting our
+	  // angle from degrees to radians
+	  ctx.rotate(this.direct - Math.PI / 2);
+
+	  dogSpriteImage.render();
+	  dogSpriteImage.update();
+	  // draw it up and to the left by half the width
+	  // and height of the image
+	  // ctx.drawImage(dogImage, -RADIUS, -RADIUS, RADIUS * 2, RADIUS * 2);
+
+	  // and restore the co-ords to how they were when we began
+	 //  ctx.restore();
+	 ctx.setTransform(1,0,0,1,0,0);
+	 //
+	 //  ctx.fillStyle = this.color;
+	 //  ctx.beginPath();
+	 //  ctx.lineTo(this.pos[0],this.pos[1]);
+	 //  ctx.arc(this.pos[0],this.pos[1],this.radius,this.direct +
+	 //      0.6*Math.PI,this.direct + 1.4*Math.PI, true);
+	 //  ctx.lineTo(this.pos[0],this.pos[1]);
+	 //  ctx.fill();
+	 //  ctx.lineWidth = 1;
+	 //  ctx.strokeStyle = 'white';
+	 //  ctx.stroke();
 	};
 
 	Dog.prototype.turn = function (angle) {
 	  this.direct += angle;
+	  this.direct = this.direct % (Math.PI * 2);
+
 
 	};
 
@@ -337,7 +496,6 @@
 
 
 	Dog.prototype.collideWith = function (otherObject) {
-	  console.log(otherObject.toString());
 	  if (otherObject.toString() === 'Squirrel') {
 	    this.relocate();
 	  } else if (otherObject.toString() === 'Acorn') {
@@ -393,46 +551,46 @@
 	  for (var i = 0; i < this.allObjects().length; i++) {
 	    this.allObjects()[i].draw(ctx);
 	  }
-	  this.drawBottom(ctx);
-	  this.drawLives(ctx);
+	  // this.drawBottom(ctx);
+	  // this.drawLives(ctx);
 	  this.drawPoints(ctx);
 
 	};
 
 	Game.prototype.drawPoints = function(ctx) {
 	  ctx.font="50px Courier";
-	  ctx.fillStyle = "white";
+	  ctx.fillStyle = "black";
 	  ctx.fillText(this.points,this.dimX - (50 + (25 * this.points.toString().length)) , this.dimY + 40);
 
 	};
 
-	Game.prototype.drawBottom = function(ctx) {
-	  ctx.fillStyle = 'black';
-	  ctx.strokeStyle = 'white';
-	  ctx.lineWidth = 1;
-	  ctx.rect(0,this.dimY,this.dimX, 50);
-	  ctx.stroke();
-	  ctx.fill();
-	};
+	// Game.prototype.drawBottom = function(ctx) {
+	//   ctx.fillStyle = 'black';
+	//   ctx.strokeStyle = 'white';
+	//   ctx.lineWidth = 1;
+	//   ctx.rect(0,this.dimY,this.dimX, 50);
+	//   ctx.stroke();
+	//   ctx.fill();
+	// };
 
-	Game.prototype.drawlife = function(ctx, offset) {
-	  ctx.fillStyle = 'rgba(255, 255, 255, 0.0)';
-	  ctx.strokeStyle = 'white';
-	  ctx.lineWidth = 1;
-	  ctx.beginPath();
-	  ctx.lineTo(15 + offset,this.dimY + 25);
-	  ctx.arc(15 + offset,this.dimY + 25,this.dog.radius,
-	      0.6*Math.PI, 1.4*Math.PI, true);
-	      ctx.fill();
-	  ctx.lineTo(15 + offset,this.dimY + 25);
-	  ctx.stroke();
-	};
-
-	Game.prototype.drawLives = function(ctx) {
-	  for (var i = 0; i < this.dog.lives; i++) {
-	    this.drawlife(ctx, i * 25);
-	  }
-	};
+	// Game.prototype.drawlife = function(ctx, offset) {
+	//   ctx.fillStyle = 'rgba(255, 255, 255, 0.0)';
+	//   ctx.strokeStyle = 'white';
+	//   ctx.lineWidth = 1;
+	//   ctx.beginPath();
+	//   ctx.lineTo(15 + offset,this.dimY + 25);
+	//   ctx.arc(15 + offset,this.dimY + 25,this.dog.radius,
+	//       0.6*Math.PI, 1.4*Math.PI, true);
+	//       ctx.fill();
+	//   ctx.lineTo(15 + offset,this.dimY + 25);
+	//   ctx.stroke();
+	// };
+	//
+	// Game.prototype.drawLives = function(ctx) {
+	//   for (var i = 0; i < this.dog.lives; i++) {
+	//     this.drawlife(ctx, i * 25);
+	//   }
+	// };
 
 
 
@@ -894,8 +1052,10 @@
 	var StationaryObject = __webpack_require__ (9);
 
 	var COLOR = "rgba(255,255,0, 1.0)";
-	var RADIUS = 5;
+	var RADIUS = 10;
 
+	var acornImage = new Image();
+	acornImage.src = "./acorn.gif";
 
 	function Acorn (options) {
 	  this.pos = options.pos;
@@ -909,6 +1069,11 @@
 	Acorn.prototype.toString = function() {
 	  return 'Acorn';
 	};
+
+	Acorn.prototype.draw = function(ctx) {
+	  ctx.drawImage(acornImage, this.pos[0] - RADIUS, this.pos[1] -RADIUS , RADIUS * 2, RADIUS * 2);
+	};
+
 
 	module.exports = Acorn;
 
@@ -939,12 +1104,17 @@
 	};
 
 
+
 	StationaryObject.prototype.isCollidedWith = function(otherObject) {
 	  return utils.distanceBetween(this.pos, otherObject.pos) <
 	                              (this.radius + otherObject.radius);
 
 	};
 
+	StationaryObject.prototype.collideWith = function (otherObject) {
+
+
+	};
 
 	 module.exports = StationaryObject;
 
