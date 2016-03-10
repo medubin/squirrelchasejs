@@ -126,7 +126,9 @@ Dog.prototype.turn = function (angle) {
 
 Dog.prototype.collideWith = function (otherObject) {
   if (otherObject.toString() === 'Squirrel') {
-    this.relocate();
+    if (!this.game.barkvalue) {
+      this.relocate();
+    }
   } else if (otherObject.toString() === 'Acorn') {
     this.game.remove(otherObject);
   } else if (otherObject.toString() === 'Bush') {

@@ -127,9 +127,11 @@ Game.prototype.drawBones = function(ctx) {
 };
 
 Game.prototype.drawBottom = function(ctx) {
+  ctx.beginPath();
   ctx.strokeStyle = 'black';
   ctx.lineWidth = 1;
-  ctx.rect(0,this.dimY,this.dimX, 50);
+  ctx.moveTo(0,this.dimY);
+  ctx.lineTo(this.dimX, this.dimY);
   ctx.stroke();
 };
 

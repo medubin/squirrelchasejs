@@ -13,7 +13,7 @@ function GameView(ctx,game) {
 GameView.prototype.start = function() {
 
   var thisCount = this.gameCOunt;
-  var gameLoop = setInterval(function(renderLose) {
+  var gameLoop = setInterval(function() {
 
     this.checkKey();
     this.game.step();

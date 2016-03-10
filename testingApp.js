@@ -198,9 +198,11 @@
 	};
 
 	Game.prototype.drawBottom = function(ctx) {
+	  ctx.beginPath();
 	  ctx.strokeStyle = 'black';
 	  ctx.lineWidth = 1;
-	  ctx.rect(0,this.dimY,this.dimX, 50);
+	  ctx.moveTo(0,this.dimY);
+	  ctx.lineTo(this.dimX, this.dimY);
 	  ctx.stroke();
 	};
 
@@ -733,7 +735,9 @@
 
 	Dog.prototype.collideWith = function (otherObject) {
 	  if (otherObject.toString() === 'Squirrel') {
-	    this.relocate();
+	    if (!this.game.barkvalue) {
+	      this.relocate();
+	    }
 	  } else if (otherObject.toString() === 'Acorn') {
 	    this.game.remove(otherObject);
 	  } else if (otherObject.toString() === 'Bush') {
@@ -856,7 +860,7 @@
 	GameView.prototype.start = function() {
 
 	  var thisCount = this.gameCOunt;
-	  var gameLoop = setInterval(function(renderLose) {
+	  var gameLoop = setInterval(function() {
 
 	    this.checkKey();
 	    this.game.step();
