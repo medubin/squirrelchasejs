@@ -60,7 +60,7 @@
 	var gameView = new GameView(ctx,game);
 
 	canvas.width  = game.dimX;
-	canvas.height = game.dimY;
+	canvas.height = game.dimY + 50;
 
 	gameView.start();
 
@@ -74,6 +74,7 @@
 	var utils = __webpack_require__ (3);
 	var Acorn = __webpack_require__(6);
 	var Bush = __webpack_require__(10);
+	var Bone = __webpack_require__(11);
 	function Game(numSquirrels) {
 	  this.numSquirrels = numSquirrels;
 	  this.dimX = 1000;
@@ -81,9 +82,14 @@
 	  this.squirrels = [];
 	  this.acorns = [];
 	  this.bushes = [];
+	  this.bones = [];
 	  this.dog = new Dog({game: this, pos: [this.dimX/2, this.dimY/2]});
 	  this.points = 0;
+	  this.barkvalue = 0;
 	  this.addBushes();
+	  this.state = 'start';
+	  // var snd = new Audio("Finalcountdown.wav"); // buffers automatically when created
+	  // snd.play();
 	}
 
 	Game.prototype.addSquirrels = function () {
@@ -93,18 +99,63 @@
 	};
 
 	Game.prototype.addBushes = function() {
-	  this.bushes.push(new Bush({pos: this.randPosition(), game: this}));
-	  this.bushes.push(new Bush({pos: this.randPosition(), game: this}));
-	  this.bushes.push(new Bush({pos: this.randPosition(), game: this}));
+	  this.addBush();
+	  this.addBush();
+	  this.addBush();
+
+	};
+
+	Game.prototype.addBush = function(){
+	  var placeable = false;
+	  while(!placeable) {
+	    var randomPos = this.randPosition();
+	    placeable = true;
+	    for (var i = 0; i < this.bushes.length; i++) {
+	      if (utils.distanceBetween(this.bushes[i].pos, randomPos) < this.bushes[i].radius * 2) {
+	        placeable = false;
+	      }
+	    }
+	  }
+	  this.bushes.push(new Bush({pos: randomPos, game: this}));
 	};
 
 	Game.prototype.addAcorns = function() {
 	  if (this.acorns.length === 0) {
-	    this.acorns.push(new Acorn({pos: this.randPosition(), game: this}));
-	    this.acorns.push(new Acorn({pos: this.randPosition(), game: this}));
-	    this.addSquirrels();
+	    this.addAcorn();
+	    this.addAcorn();
+	    if (this.points !== 0) this.addSquirrels();
+	    if (this.points && this.points % 6 === 0) this.addBone();
 	  }
 	};
+
+	Game.prototype.addAcorn = function() {
+	  var placeable = false;
+	  while(!placeable) {
+	    var randomPos = this.randPosition();
+	    placeable = true;
+	    for (var i = 0; i < this.allStationaryObjects().length; i++) {
+	      if (utils.distanceBetween(this.allStationaryObjects()[i].pos, randomPos) < this.allStationaryObjects()[i].radius * 2) {
+	        placeable = false;
+	      }
+	    }
+	  }
+	  this.acorns.push(new Acorn({pos: randomPos, game: this}));
+	};
+
+	Game.prototype.addBone = function() {
+	  var placeable = false;
+	  while(!placeable) {
+	    var randomPos = this.randPosition();
+	    placeable = true;
+	    for (var i = 0; i < this.allStationaryObjects().length; i++) {
+	      if (utils.distanceBetween(this.allStationaryObjects()[i].pos, randomPos) < this.allStationaryObjects()[i].radius * 2) {
+	        placeable = false;
+	      }
+	    }
+	  }
+	  this.bones.push(new Bone({pos: randomPos, game: this}));
+	};
+
 
 	Game.prototype.randPosition = function() {
 	  return [Math.floor(this.dimX * 0.8 * Math.random()) + this.dimX * 0.1,
@@ -122,21 +173,37 @@
 	};
 
 	Game.prototype.draw = function (ctx) {
+	  if (this.barkvalue > 0) this.barkvalue -= 1;
 	  ctx.clearRect(0,0,this.dimX , this.dimY + 50);
 	  for (var i = 0; i < this.allObjects().length; i++) {
 	    this.allObjects()[i].draw(ctx);
 	  }
-
+	  this.drawBottom(ctx);
 	  this.drawPoints(ctx);
+	  this.drawBones(ctx);
 
 	};
 
 	Game.prototype.drawPoints = function(ctx) {
 	  ctx.font="50px Courier";
 	  ctx.fillStyle = "black";
-	  ctx.fillText(this.points,this.dimX - (50 + (25 * this.points.toString().length)) , this.dimY - 10);
-
+	  ctx.fillText('Points: ' + this.points,this.dimX - (25 + (25 * (this.points.toString().length+ 9))) , this.dimY + 40);
 	};
+
+
+	Game.prototype.drawBones = function(ctx) {
+	  ctx.font="50px Courier";
+	  ctx.fillStyle = "black";
+	  ctx.fillText('Bones: ' + this.dog.bones, 25 , this.dimY + 40);
+	};
+
+	Game.prototype.drawBottom = function(ctx) {
+	  ctx.strokeStyle = 'black';
+	  ctx.lineWidth = 1;
+	  ctx.rect(0,this.dimY,this.dimX, 50);
+	  ctx.stroke();
+	};
+
 
 
 	Game.prototype.moveObjects = function() {
@@ -182,6 +249,7 @@
 
 
 	Game.prototype.step = function() {
+
 	  this.moveObjects();
 	  this.checkCollisons();
 	  this.addAcorns();
@@ -193,6 +261,8 @@
 	  if (object.toString() === 'Acorn') {
 	    this.acorns.splice(this.acorns.indexOf(object), 1);
 	    this.points += 1;
+	  } else if (object.toString() === 'Bone') {
+	    this.bones.splice(this.bones.indexOf(object), 1);
 	  }
 	};
 	Game.prototype.allMovingObjects = function() {
@@ -200,7 +270,7 @@
 	};
 
 	Game.prototype.allStationaryObjects = function() {
-	  return this.acorns.concat(this.bushes);
+	  return this.acorns.concat(this.bushes).concat(this.bones);
 	};
 
 	Game.prototype.allObjects = function() {
@@ -221,12 +291,15 @@
 	  return (this.dog.lives <= 0);
 	};
 
-	Game.prototype.playerWins = function () {
-	  return (this.squirrels.length === 0);
-	};
+	// Game.prototype.playerWins = function () {
+	//   return (this.squirrels.length === 0);
+	// };
 
 	Game.prototype.over = function () {
-	  return (this.playerLoses() || this.playerWins());
+	  if (this.playerLoses()) {
+	    this.state = 'over';
+	    return (true);
+	  }
 	};
 
 
@@ -241,7 +314,6 @@
 	var MovingObject = __webpack_require__ (4);
 	var Dog = __webpack_require__(5);
 
-	var COLOR = "rgba(139,69,19, 1.0)";
 	var RADIUS = 15;
 	var SPEED = 3;
 
@@ -251,7 +323,9 @@
 
 
 	var squirrelSprite = new Image();
-	squirrelSprite.src = "./squirrel_sprites.png";
+	var deadSquirrelSprite = new Image();
+	deadSquirrelSprite.src = "./sprites/squirrel_dead.png";
+	squirrelSprite.src = "./sprites/squirrel_sprites.png";
 
 	var tickCount = 0;
 	var frameIndex = 0;
@@ -304,7 +378,6 @@
 	  this.game = options.game;
 	  this.vel = [0,0];//utils.randomVect(SPEED);
 	  this.radius = RADIUS;
-	  this.color = COLOR;
 	  this.direct = 0;
 	  this.randomDirectOffset = (Math.random() - 0.5) * 2;
 	  this.maxSpeed = SPEED + (Math.random()) * 1.3;
@@ -315,8 +388,9 @@
 
 	Squirrel.prototype.collideWith = function (otherObject, tempVel) {
 	  if (otherObject.toString() === 'Bush') {
-	    this.vel[0] = this.vel[0] * 2/3;
-	    this.vel[1] = this.vel[1] * 2/3;
+	    // this.vel[0] = this.vel[0] * 2/3;
+	    // this.vel[1] = this.vel[1] * 2/3;
+	      this.applyFriction(0.3);
 	  }
 	  // if (otherObject.toString() === 'Squirrel') {
 	  //   this.vel = otherObject.vel;
@@ -330,12 +404,21 @@
 
 
 	Squirrel.prototype.draw = function(ctx) {
-	  if (!squirrelSpriteImage) var squirrelSpriteImage = sprite({
+	  if (this.game.barkvalue === 0) {
+	    var squirrelSpriteImage = sprite({
+	      context: ctx,
+	      width: 96,
+	      height: 32,
+	      image: squirrelSprite
+	    });
+	} else {
+	  var squirrelSpriteImage = sprite({
 	    context: ctx,
 	    width: 96,
 	    height: 32,
-	    image: squirrelSprite
-	});
+	    image: deadSquirrelSprite
+	  });
+	}
 
 	  ctx.translate(this.pos[0], this.pos[1]);
 	  ctx.rotate(this.direct - Math.PI / 2);
@@ -344,11 +427,11 @@
 	  squirrelSpriteImage.update();
 	  ctx.setTransform(1,0,0,1,0,0);
 
-	  ctx.beginPath();
-	  ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
-	  ctx.lineWidth = 1;
-	  ctx.strokeStyle = 'white';
-	  ctx.stroke();
+	  // ctx.beginPath();
+	  // ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+	  // ctx.lineWidth = 1;
+	  // ctx.strokeStyle = 'white';
+	  // ctx.stroke();
 
 	};
 
@@ -361,30 +444,41 @@
 	    var deltaY = pos[1] - this.pos[1];
 	    var deltaX = pos[0] - this.pos[0];
 	    var angleInRadians = Math.atan2(deltaY, deltaX);
-	    this.turn(angleInRadians);
+	    // if (utils.distanceBetween(pos, this.pos) > 150) this.turn(angleInRadians);
+	    // if (utils.distanceBetween(pos, this.pos) < 150) this.turn(-angleInRadians);
+	    // this.turn(Math.random() * Math.PI * 2);
+	    if (this.game.barkvalue > 0) {
+	      if (utils.distanceBetween(pos, this.pos) > 200) this.turn(angleInRadians);
+	      if (utils.distanceBetween(pos, this.pos) < 200) this.turn(-angleInRadians);
+	    } else {
+	      this.turn(angleInRadians);
+
+	    }
 	};
 
 	Squirrel.prototype.turn = function (angle) {
 	  this.direct = angle + this.randomDirectOffset;
+	  // this.direct = this.direct + (Math.random() -0.5)/10;
 	};
 
 
 
 	Squirrel.prototype.move = function(pos) {
-	  this.chase(pos);
+	  if (this.game.barkvalue <= 0) {
+	    this.chase(pos);
 
 	  //follow and accel
 
-	  var xVel = 0.5 * Math.cos(this.direct) + this.vel[0];
-	  var yVel = 0.5 * Math.sin(this.direct) + this.vel[1];
+	    var xVel = 0.5 * Math.cos(this.direct) + this.vel[0];
+	    var yVel = 0.5 * Math.sin(this.direct) + this.vel[1];
 
-	  this.vel[0] = (Math.abs(xVel) > this.maxSpeed ? (this.maxSpeed * (xVel/Math.abs(xVel))) : xVel);
-	  this.vel[1] = (Math.abs(yVel) > this.maxSpeed ? (this.maxSpeed * (yVel/Math.abs(yVel))) : yVel);
+	    this.vel[0] = (Math.abs(xVel) > this.maxSpeed ? (this.maxSpeed * (xVel/Math.abs(xVel))) : xVel);
+	    this.vel[1] = (Math.abs(yVel) > this.maxSpeed ? (this.maxSpeed * (yVel/Math.abs(yVel))) : yVel);
 
 
-	  this.pos[0] += this.vel[0];
-	  this.pos[1] += this.vel[1];
-
+	    this.pos[0] += this.vel[0];
+	    this.pos[1] += this.vel[1];
+	  }
 	};
 
 
@@ -515,15 +609,15 @@
 	var MovingObject = __webpack_require__ (4);
 	var Squirrel = __webpack_require__(2);
 
-	var COLOR = "rgba(0, 0, 0, 1.0)";
 	var RADIUS = 30;
 	var SPEED = [0,0];
 	var DIRECTION = 0;
-	// var dogImage = new Image();
-	// dogImage.src = "./dog.gif";
+
+	console.log('dog!');
 
 	var dogSprite = new Image();
-	dogSprite.src = "./dog_sprites" + Math.floor(Math.random() * (3)) + ".gif";
+	dogSprite.src = "./sprites/dog_sprites" + Math.floor(Math.random() * (3)) + ".gif";
+
 
 	var tickCount = 0;
 	var frameIndex = 0;
@@ -552,7 +646,6 @@
 	    };
 
 	    that.update = function () {
-	      // tickCount += 1;
 	      if (tickCount > that.ticksPerFrame) {
 	        tickCount = 0;
 	        if (frameIndex < numberOfFrames - 1) {
@@ -571,10 +664,11 @@
 	  this.game = options.game;
 	  this.vel = SPEED;
 	  this.radius = RADIUS;
-	  this.color = COLOR;
 	  this.pos = options.pos;
 	  this.direct = 0;
 	  this.lives = 1;
+	  this.bones = 0;
+	  this.dogSpriteImage;
 
 	}
 	utils.inherits(Dog, MovingObject);
@@ -604,24 +698,26 @@
 
 
 	Dog.prototype.draw = function(ctx) {
-	  if (!dogSpriteImage) var dogSpriteImage = sprite({
+	  if (!this.dogSpriteImage) {
+	    this.dogSpriteImage = sprite({
 	    context: ctx,
 	    width: 120,
 	    height: 40,
 	    image: dogSprite
 	});
+	}
 	  ctx.translate(this.pos[0], this.pos[1]);
 	  ctx.rotate(this.direct - Math.PI / 2);
-	  dogSpriteImage.render();
-	  dogSpriteImage.update();
+	  this.dogSpriteImage.render();
+	  this.dogSpriteImage.update();
 	  ctx.setTransform(1,0,0,1,0,0);
 
-
-	  ctx.beginPath();
-	  ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
-	  ctx.lineWidth = 1;
-	  ctx.strokeStyle = 'white';
-	  ctx.stroke();
+	  //
+	  // ctx.beginPath();
+	  // ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+	  // ctx.lineWidth = 1;
+	  // ctx.strokeStyle = 'white';
+	  // ctx.stroke();
 
 
 	};
@@ -641,8 +737,19 @@
 	  } else if (otherObject.toString() === 'Acorn') {
 	    this.game.remove(otherObject);
 	  } else if (otherObject.toString() === 'Bush') {
-	    this.vel[0] = this.vel[0]/2;
-	    this.vel[1] = this.vel[1]/2;
+	    this.applyFriction(0.3);
+	    // this.vel[0] = this.vel[0]/2;
+	    // this.vel[1] = this.vel[1]/2;
+	  } else if (otherObject.toString() === 'Bone') {
+	    this.bones += 1;
+	    this.game.remove(otherObject);
+	  }
+	};
+
+	Dog.prototype.bark = function() {
+	  if (this.bones > 0) {
+	    this.bones -= 1;
+	    this.game.barkvalue += 200;
 	  }
 	};
 
@@ -657,16 +764,14 @@
 	var utils = __webpack_require__ (3);
 	var StationaryObject = __webpack_require__ (7);
 
-	var COLOR = "rgba(255,255,0, 1.0)";
 	var RADIUS = 30;
 
 	var acornImage = new Image();
-	acornImage.src = "./acorn.gif";
+	acornImage.src = "./sprites/acorn.gif";
 
 	function Acorn (options) {
 	  this.pos = options.pos;
 	  this.radius = RADIUS;
-	  this.color = COLOR;
 	  this.game = options.game;
 	}
 
@@ -678,11 +783,11 @@
 
 	Acorn.prototype.draw = function(ctx) {
 	  ctx.drawImage(acornImage, this.pos[0]- 1/3*RADIUS , this.pos[1]- 1/3*RADIUS , RADIUS * 2/3, RADIUS * 2/3);
-	  ctx.beginPath();
-	  ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
-	  ctx.lineWidth = 1;
-	  ctx.strokeStyle = 'white';
-	  ctx.stroke();
+	  // ctx.beginPath();
+	  // ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+	  // ctx.lineWidth = 1;
+	  // ctx.strokeStyle = 'white';
+	  // ctx.stroke();
 
 
 	};
@@ -738,15 +843,21 @@
 
 	var Game = __webpack_require__(1);
 	var key = __webpack_require__(9);
+	var Dog = __webpack_require__(5);
 
 	function GameView(ctx,game) {
 	  this.game = game;
 	  this.ctx = ctx;
 	  this.dog = this.game.dog;
 
+
+
 	}
 	GameView.prototype.start = function() {
+
+	  var thisCount = this.gameCOunt;
 	  var gameLoop = setInterval(function(renderLose) {
+
 	    this.checkKey();
 	    this.game.step();
 	    this.game.draw(this.ctx);
@@ -759,22 +870,36 @@
 	};
 
 	GameView.prototype.renderLose = function () {
+	  var gameOverLoop = setInterval(function() {
+	    this.ctx.fillStyle = 'black';
+	    this.ctx.rect(0,0,this.game.dimX,this.game.dimY + 50);
+	    this.ctx.fill();
+	    this.ctx.font="50px Courier";
+	    this.ctx.fillStyle = "white";
+	    if (this.game.points <= 6){
+	       this.ctx.fillText('That was ruff!', this.game.dimX / 3, this.game.dimY / 2);
+	    } else if (this.game.points <= 12) {
+	      this.ctx.fillText('Doggonit!', this.game.dimX / 3, this.game.dimY / 2);
+	    } else if (this.game.points < 12) {
+	      this.ctx.fillText('Good boy!', this.game.dimX / 3, this.game.dimY / 2);
+	    } else if (this.game.points < 18) {
+	      this.ctx.fillText('Hot dog!', this.game.dimX / 3, this.game.dimY / 2);
+	    } else {
+	      this.ctx.fillText('Top dog!', this.game.dimX / 3, this.game.dimY / 2);
+	    }
+	      this.ctx.fillText('You scored ' + this.game.points + ' points!', this.game.dimX / 5, this.game.dimY / 2 + 50);
 
-	  this.ctx.fillStyle = 'black';
-	  this.ctx.rect(0,0,this.game.dimX,this.game.dimY + 50);
-	  this.ctx.fill();
+	    this.checkKey();
+	    if(this.game.state !=='over') {
+	      clearInterval(gameOverLoop);
+	      this.start();
+	    }
 
-	  this.ctx.font="50px Courier";
-	  this.ctx.fillStyle = "white";
-	  if (this.game.points <= 6) this.ctx.fillText('That was ruff!', this.game.dimX / 3, this.game.dimY / 2);
-	  if (this.game.points > 6 && this.game.points <= 12) this.ctx.fillText('Doggonit!', this.game.dimX / 3, this.game.dimY / 2);
-	  if (this.game.points > 12) this.ctx.fillText('Good boy!', this.game.dimX / 3, this.game.dimY / 2);
-	  this.ctx.fillText('You scored ' + this.game.points + ' points!', this.game.dimX / 5, this.game.dimY / 2 + 50);
+	  }.bind(this));
 
 	};
 
 	GameView.prototype.checkKey = function () {
-
 	  if (key.isPressed('right')) {
 	    this.dog.turn(Math.PI/32);
 	  }
@@ -782,10 +907,34 @@
 	    this.dog.power(0.8);
 	  }
 	  if (key.isPressed('down')) {
-	    this.dog.power(-0.8);
+	    this.dog.power(-0.4);
 	  }
 	  if (key.isPressed('left')) {
 	    this.dog.turn(-Math.PI/32);
+	  }
+
+	  if (key.isPressed('space')) {
+	    this.dog.bark();
+	  }
+	  if (key.isPressed('enter')) {
+	    console.log(this.game.state);
+	    if (this.game.state === 'over') {
+	      this.game.numSquirrels = 2;
+	      this.game.dimX = 1000;
+	      this.game.dimY = 600;
+	      this.game.squirrels = [];
+	      this.game.acorns = [];
+	      this.game.bushes = [];
+	      this.game.bones = [];
+	      this.game.points = 0;
+	      this.game.barkvalue = 0;
+	      this.game.addBushes();
+	      this.game.state = 'start';
+
+	      this.dog.direct = 0;
+	      this.dog.lives = 1;
+	      this.dog.bones = 0;
+	    }
 	  }
 	  // if ((!key.isPressed('up')) && (!key.isPressed('down'))) {
 	  //   this.dog.;
@@ -1104,16 +1253,16 @@
 	var utils = __webpack_require__ (3);
 	var StationaryObject = __webpack_require__ (7);
 
-	var COLOR = "rgba(255,255,0, 1.0)";
+
 	var RADIUS = 60;
 
 	var bushImage = new Image();
-	bushImage.src = "./bush.gif";
+	bushImage.src = "./sprites/bush.gif";
 
 	function Bush (options) {
 	  this.pos = options.pos;
 	  this.radius = RADIUS;
-	  this.color = COLOR;
+
 	  this.game = options.game;
 	}
 
@@ -1125,17 +1274,56 @@
 
 	Bush.prototype.draw = function(ctx) {
 	  ctx.drawImage(bushImage, this.pos[0]- 1/2*RADIUS , this.pos[1]- 1/2*RADIUS , RADIUS, RADIUS);
-	  ctx.beginPath();
-	  ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
-	  ctx.lineWidth = 1;
-	  ctx.strokeStyle = 'white';
-	  ctx.stroke();
+	  // ctx.beginPath();
+	  // ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+	  // ctx.lineWidth = 1;
+	  // ctx.strokeStyle = 'white';
+	  // ctx.stroke();
 
 
 	};
 
 
 	module.exports = Bush;
+
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var utils = __webpack_require__ (3);
+	var StationaryObject = __webpack_require__ (7);
+
+	var RADIUS = 30;
+
+	var boneImage = new Image();
+	boneImage.src = "./sprites/bone.png";
+
+	function Bone (options) {
+	  this.pos = options.pos;
+	  this.radius = RADIUS;
+	  this.game = options.game;
+	}
+
+	utils.inherits(Bone, StationaryObject);
+
+	Bone.prototype.toString = function() {
+	  return 'Bone';
+	};
+
+	Bone.prototype.draw = function(ctx) {
+	  ctx.drawImage(boneImage, this.pos[0]- 1/3*RADIUS , this.pos[1]- 1/3*RADIUS , RADIUS * 2/3, RADIUS * 2/3);
+	  // ctx.beginPath();
+	  // ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+	  // ctx.lineWidth = 1;
+	  // ctx.strokeStyle = 'white';
+	  // ctx.stroke();
+
+
+	};
+
+
+	module.exports = Bone;
 
 
 /***/ }

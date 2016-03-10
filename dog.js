@@ -2,15 +2,15 @@ var utils = require ("./utils");
 var MovingObject = require ("./movingObject");
 var Squirrel = require('./squirrel');
 
-var COLOR = "rgba(0, 0, 0, 1.0)";
 var RADIUS = 30;
 var SPEED = [0,0];
 var DIRECTION = 0;
-// var dogImage = new Image();
-// dogImage.src = "./dog.gif";
+
+console.log('dog!');
 
 var dogSprite = new Image();
-dogSprite.src = "./dog_sprites" + Math.floor(Math.random() * (3)) + ".gif";
+dogSprite.src = "./sprites/dog_sprites" + Math.floor(Math.random() * (3)) + ".gif";
+
 
 var tickCount = 0;
 var frameIndex = 0;
@@ -39,7 +39,6 @@ function sprite (options) {
     };
 
     that.update = function () {
-      // tickCount += 1;
       if (tickCount > that.ticksPerFrame) {
         tickCount = 0;
         if (frameIndex < numberOfFrames - 1) {
@@ -58,10 +57,11 @@ function Dog (options) {
   this.game = options.game;
   this.vel = SPEED;
   this.radius = RADIUS;
-  this.color = COLOR;
   this.pos = options.pos;
   this.direct = 0;
   this.lives = 1;
+  this.bones = 0;
+  this.dogSpriteImage;
 
 }
 utils.inherits(Dog, MovingObject);
@@ -91,24 +91,26 @@ Dog.prototype.power = function (impulse) {
 
 
 Dog.prototype.draw = function(ctx) {
-  if (!dogSpriteImage) var dogSpriteImage = sprite({
+  if (!this.dogSpriteImage) {
+    this.dogSpriteImage = sprite({
     context: ctx,
     width: 120,
     height: 40,
     image: dogSprite
 });
+}
   ctx.translate(this.pos[0], this.pos[1]);
   ctx.rotate(this.direct - Math.PI / 2);
-  dogSpriteImage.render();
-  dogSpriteImage.update();
+  this.dogSpriteImage.render();
+  this.dogSpriteImage.update();
   ctx.setTransform(1,0,0,1,0,0);
 
-
-  ctx.beginPath();
-  ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = 'white';
-  ctx.stroke();
+  //
+  // ctx.beginPath();
+  // ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+  // ctx.lineWidth = 1;
+  // ctx.strokeStyle = 'white';
+  // ctx.stroke();
 
 
 };
@@ -128,8 +130,19 @@ Dog.prototype.collideWith = function (otherObject) {
   } else if (otherObject.toString() === 'Acorn') {
     this.game.remove(otherObject);
   } else if (otherObject.toString() === 'Bush') {
-    this.vel[0] = this.vel[0]/2;
-    this.vel[1] = this.vel[1]/2;
+    this.applyFriction(0.3);
+    // this.vel[0] = this.vel[0]/2;
+    // this.vel[1] = this.vel[1]/2;
+  } else if (otherObject.toString() === 'Bone') {
+    this.bones += 1;
+    this.game.remove(otherObject);
+  }
+};
+
+Dog.prototype.bark = function() {
+  if (this.bones > 0) {
+    this.bones -= 1;
+    this.game.barkvalue += 200;
   }
 };
 

@@ -1,0 +1,21 @@
+body {
+  background-color: #F7DAD0;
+}
+
+.rules {
+  width: 200px;
+  float: left;
+  display: inline;
+  position: absolute;;
+}
+
+h1 {
+  text-align: center;
+}
+
+#game-canvas {
+  float: none;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}

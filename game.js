@@ -3,6 +3,7 @@ var Dog = require('./dog');
 var utils = require ("./utils");
 var Acorn = require('./acorn');
 var Bush = require('./bush');
+var Bone = require('./bone');
 function Game(numSquirrels) {
   this.numSquirrels = numSquirrels;
   this.dimX = 1000;
@@ -10,9 +11,14 @@ function Game(numSquirrels) {
   this.squirrels = [];
   this.acorns = [];
   this.bushes = [];
+  this.bones = [];
   this.dog = new Dog({game: this, pos: [this.dimX/2, this.dimY/2]});
   this.points = 0;
+  this.barkvalue = 0;
   this.addBushes();
+  this.state = 'start';
+  // var snd = new Audio("Finalcountdown.wav"); // buffers automatically when created
+  // snd.play();
 }
 
 Game.prototype.addSquirrels = function () {
@@ -22,18 +28,63 @@ Game.prototype.addSquirrels = function () {
 };
 
 Game.prototype.addBushes = function() {
-  this.bushes.push(new Bush({pos: this.randPosition(), game: this}));
-  this.bushes.push(new Bush({pos: this.randPosition(), game: this}));
-  this.bushes.push(new Bush({pos: this.randPosition(), game: this}));
+  this.addBush();
+  this.addBush();
+  this.addBush();
+
+};
+
+Game.prototype.addBush = function(){
+  var placeable = false;
+  while(!placeable) {
+    var randomPos = this.randPosition();
+    placeable = true;
+    for (var i = 0; i < this.bushes.length; i++) {
+      if (utils.distanceBetween(this.bushes[i].pos, randomPos) < this.bushes[i].radius * 2) {
+        placeable = false;
+      }
+    }
+  }
+  this.bushes.push(new Bush({pos: randomPos, game: this}));
 };
 
 Game.prototype.addAcorns = function() {
   if (this.acorns.length === 0) {
-    this.acorns.push(new Acorn({pos: this.randPosition(), game: this}));
-    this.acorns.push(new Acorn({pos: this.randPosition(), game: this}));
-    this.addSquirrels();
+    this.addAcorn();
+    this.addAcorn();
+    if (this.points !== 0) this.addSquirrels();
+    if (this.points && this.points % 6 === 0) this.addBone();
   }
 };
+
+Game.prototype.addAcorn = function() {
+  var placeable = false;
+  while(!placeable) {
+    var randomPos = this.randPosition();
+    placeable = true;
+    for (var i = 0; i < this.allStationaryObjects().length; i++) {
+      if (utils.distanceBetween(this.allStationaryObjects()[i].pos, randomPos) < this.allStationaryObjects()[i].radius * 2) {
+        placeable = false;
+      }
+    }
+  }
+  this.acorns.push(new Acorn({pos: randomPos, game: this}));
+};
+
+Game.prototype.addBone = function() {
+  var placeable = false;
+  while(!placeable) {
+    var randomPos = this.randPosition();
+    placeable = true;
+    for (var i = 0; i < this.allStationaryObjects().length; i++) {
+      if (utils.distanceBetween(this.allStationaryObjects()[i].pos, randomPos) < this.allStationaryObjects()[i].radius * 2) {
+        placeable = false;
+      }
+    }
+  }
+  this.bones.push(new Bone({pos: randomPos, game: this}));
+};
+
 
 Game.prototype.randPosition = function() {
   return [Math.floor(this.dimX * 0.8 * Math.random()) + this.dimX * 0.1,
@@ -51,21 +102,37 @@ Game.prototype.randSquirrelPosition = function() {
 };
 
 Game.prototype.draw = function (ctx) {
+  if (this.barkvalue > 0) this.barkvalue -= 1;
   ctx.clearRect(0,0,this.dimX , this.dimY + 50);
   for (var i = 0; i < this.allObjects().length; i++) {
     this.allObjects()[i].draw(ctx);
   }
-
+  this.drawBottom(ctx);
   this.drawPoints(ctx);
+  this.drawBones(ctx);
 
 };
 
 Game.prototype.drawPoints = function(ctx) {
   ctx.font="50px Courier";
   ctx.fillStyle = "black";
-  ctx.fillText(this.points,this.dimX - (50 + (25 * this.points.toString().length)) , this.dimY - 10);
-
+  ctx.fillText('Points: ' + this.points,this.dimX - (25 + (25 * (this.points.toString().length+ 9))) , this.dimY + 40);
 };
+
+
+Game.prototype.drawBones = function(ctx) {
+  ctx.font="50px Courier";
+  ctx.fillStyle = "black";
+  ctx.fillText('Bones: ' + this.dog.bones, 25 , this.dimY + 40);
+};
+
+Game.prototype.drawBottom = function(ctx) {
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = 1;
+  ctx.rect(0,this.dimY,this.dimX, 50);
+  ctx.stroke();
+};
+
 
 
 Game.prototype.moveObjects = function() {
@@ -111,6 +178,7 @@ Game.prototype.objectsCollided = function (obj1, obj2) {
 
 
 Game.prototype.step = function() {
+
   this.moveObjects();
   this.checkCollisons();
   this.addAcorns();
@@ -122,6 +190,8 @@ Game.prototype.remove = function(object) {
   if (object.toString() === 'Acorn') {
     this.acorns.splice(this.acorns.indexOf(object), 1);
     this.points += 1;
+  } else if (object.toString() === 'Bone') {
+    this.bones.splice(this.bones.indexOf(object), 1);
   }
 };
 Game.prototype.allMovingObjects = function() {
@@ -129,7 +199,7 @@ Game.prototype.allMovingObjects = function() {
 };
 
 Game.prototype.allStationaryObjects = function() {
-  return this.acorns.concat(this.bushes);
+  return this.acorns.concat(this.bushes).concat(this.bones);
 };
 
 Game.prototype.allObjects = function() {
@@ -150,12 +220,15 @@ Game.prototype.playerLoses = function () {
   return (this.dog.lives <= 0);
 };
 
-Game.prototype.playerWins = function () {
-  return (this.squirrels.length === 0);
-};
+// Game.prototype.playerWins = function () {
+//   return (this.squirrels.length === 0);
+// };
 
 Game.prototype.over = function () {
-  return (this.playerLoses() || this.playerWins());
+  if (this.playerLoses()) {
+    this.state = 'over';
+    return (true);
+  }
 };
 
 

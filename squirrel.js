@@ -2,7 +2,6 @@ var utils = require ("./utils");
 var MovingObject = require ("./movingObject");
 var Dog = require("./dog");
 
-var COLOR = "rgba(139,69,19, 1.0)";
 var RADIUS = 15;
 var SPEED = 3;
 
@@ -12,7 +11,9 @@ var SPEED = 3;
 
 
 var squirrelSprite = new Image();
-squirrelSprite.src = "./squirrel_sprites.png";
+var deadSquirrelSprite = new Image();
+deadSquirrelSprite.src = "./sprites/squirrel_dead.png";
+squirrelSprite.src = "./sprites/squirrel_sprites.png";
 
 var tickCount = 0;
 var frameIndex = 0;
@@ -65,7 +66,6 @@ function Squirrel (options) {
   this.game = options.game;
   this.vel = [0,0];//utils.randomVect(SPEED);
   this.radius = RADIUS;
-  this.color = COLOR;
   this.direct = 0;
   this.randomDirectOffset = (Math.random() - 0.5) * 2;
   this.maxSpeed = SPEED + (Math.random()) * 1.3;
@@ -76,8 +76,9 @@ utils.inherits(Squirrel, MovingObject);
 
 Squirrel.prototype.collideWith = function (otherObject, tempVel) {
   if (otherObject.toString() === 'Bush') {
-    this.vel[0] = this.vel[0] * 2/3;
-    this.vel[1] = this.vel[1] * 2/3;
+    // this.vel[0] = this.vel[0] * 2/3;
+    // this.vel[1] = this.vel[1] * 2/3;
+      this.applyFriction(0.3);
   }
   // if (otherObject.toString() === 'Squirrel') {
   //   this.vel = otherObject.vel;
@@ -91,12 +92,21 @@ Squirrel.prototype.collideWith = function (otherObject, tempVel) {
 
 
 Squirrel.prototype.draw = function(ctx) {
-  if (!squirrelSpriteImage) var squirrelSpriteImage = sprite({
+  if (this.game.barkvalue === 0) {
+    var squirrelSpriteImage = sprite({
+      context: ctx,
+      width: 96,
+      height: 32,
+      image: squirrelSprite
+    });
+} else {
+  var squirrelSpriteImage = sprite({
     context: ctx,
     width: 96,
     height: 32,
-    image: squirrelSprite
-});
+    image: deadSquirrelSprite
+  });
+}
 
   ctx.translate(this.pos[0], this.pos[1]);
   ctx.rotate(this.direct - Math.PI / 2);
@@ -105,11 +115,11 @@ Squirrel.prototype.draw = function(ctx) {
   squirrelSpriteImage.update();
   ctx.setTransform(1,0,0,1,0,0);
 
-  ctx.beginPath();
-  ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = 'white';
-  ctx.stroke();
+  // ctx.beginPath();
+  // ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+  // ctx.lineWidth = 1;
+  // ctx.strokeStyle = 'white';
+  // ctx.stroke();
 
 };
 
@@ -122,30 +132,41 @@ Squirrel.prototype.chase = function(pos) {
     var deltaY = pos[1] - this.pos[1];
     var deltaX = pos[0] - this.pos[0];
     var angleInRadians = Math.atan2(deltaY, deltaX);
-    this.turn(angleInRadians);
+    // if (utils.distanceBetween(pos, this.pos) > 150) this.turn(angleInRadians);
+    // if (utils.distanceBetween(pos, this.pos) < 150) this.turn(-angleInRadians);
+    // this.turn(Math.random() * Math.PI * 2);
+    if (this.game.barkvalue > 0) {
+      if (utils.distanceBetween(pos, this.pos) > 200) this.turn(angleInRadians);
+      if (utils.distanceBetween(pos, this.pos) < 200) this.turn(-angleInRadians);
+    } else {
+      this.turn(angleInRadians);
+
+    }
 };
 
 Squirrel.prototype.turn = function (angle) {
   this.direct = angle + this.randomDirectOffset;
+  // this.direct = this.direct + (Math.random() -0.5)/10;
 };
 
 
 
 Squirrel.prototype.move = function(pos) {
-  this.chase(pos);
+  if (this.game.barkvalue <= 0) {
+    this.chase(pos);
 
   //follow and accel
 
-  var xVel = 0.5 * Math.cos(this.direct) + this.vel[0];
-  var yVel = 0.5 * Math.sin(this.direct) + this.vel[1];
+    var xVel = 0.5 * Math.cos(this.direct) + this.vel[0];
+    var yVel = 0.5 * Math.sin(this.direct) + this.vel[1];
 
-  this.vel[0] = (Math.abs(xVel) > this.maxSpeed ? (this.maxSpeed * (xVel/Math.abs(xVel))) : xVel);
-  this.vel[1] = (Math.abs(yVel) > this.maxSpeed ? (this.maxSpeed * (yVel/Math.abs(yVel))) : yVel);
+    this.vel[0] = (Math.abs(xVel) > this.maxSpeed ? (this.maxSpeed * (xVel/Math.abs(xVel))) : xVel);
+    this.vel[1] = (Math.abs(yVel) > this.maxSpeed ? (this.maxSpeed * (yVel/Math.abs(yVel))) : yVel);
 
 
-  this.pos[0] += this.vel[0];
-  this.pos[1] += this.vel[1];
-
+    this.pos[0] += this.vel[0];
+    this.pos[1] += this.vel[1];
+  }
 };
 
 
