@@ -71,7 +71,7 @@ GameView.prototype.checkKey = function () {
   }
 
   if (key.isPressed('space')) {
-    this.dog.bark();
+    if (this.game.barkvalue  <= 0) this.dog.bark();
   }
   if (key.isPressed('enter')) {
     console.log(this.game.state);
