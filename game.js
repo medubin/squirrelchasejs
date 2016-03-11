@@ -17,8 +17,8 @@ function Game(numSquirrels) {
   this.barkvalue = 0;
   this.addBushes();
   this.state = 'start';
-  // var snd = new Audio("Finalcountdown.wav"); // buffers automatically when created
-  // snd.play();
+  var snd = new Audio("Finalcountdown.wav"); // buffers automatically when created
+  snd.play();
 }
 
 Game.prototype.addSquirrels = function () {
@@ -194,8 +194,11 @@ Game.prototype.remove = function(object) {
     this.points += 1;
   } else if (object.toString() === 'Bone') {
     this.bones.splice(this.bones.indexOf(object), 1);
+  } else if (object.toString() === 'Squirrel') {
+    this.squirrels.splice(this.squirrels.indexOf(object), 1);
   }
 };
+
 Game.prototype.allMovingObjects = function() {
   return this.squirrels.concat(this.dog);
 };

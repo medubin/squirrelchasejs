@@ -49,7 +49,7 @@
 	// var Util = require ("./utils");
 	// var Squirrel = require("./squirrel");
 	var Game = __webpack_require__(1);
-	var GameView = __webpack_require__(8);
+	var GameView = __webpack_require__(10);
 	// var Dog = require("./dog");
 
 
@@ -73,8 +73,8 @@
 	var Dog = __webpack_require__(5);
 	var utils = __webpack_require__ (3);
 	var Acorn = __webpack_require__(6);
-	var Bush = __webpack_require__(10);
-	var Bone = __webpack_require__(11);
+	var Bush = __webpack_require__(8);
+	var Bone = __webpack_require__(9);
 	function Game(numSquirrels) {
 	  this.numSquirrels = numSquirrels;
 	  this.dimX = 1000;
@@ -88,8 +88,8 @@
 	  this.barkvalue = 0;
 	  this.addBushes();
 	  this.state = 'start';
-	  // var snd = new Audio("Finalcountdown.wav"); // buffers automatically when created
-	  // snd.play();
+	  var snd = new Audio("Finalcountdown.wav"); // buffers automatically when created
+	  snd.play();
 	}
 
 	Game.prototype.addSquirrels = function () {
@@ -265,8 +265,11 @@
 	    this.points += 1;
 	  } else if (object.toString() === 'Bone') {
 	    this.bones.splice(this.bones.indexOf(object), 1);
+	  } else if (object.toString() === 'Squirrel') {
+	    this.squirrels.splice(this.squirrels.indexOf(object), 1);
 	  }
 	};
+
 	Game.prototype.allMovingObjects = function() {
 	  return this.squirrels.concat(this.dog);
 	};
@@ -615,7 +618,6 @@
 	var SPEED = [0,0];
 	var DIRECTION = 0;
 
-	console.log('dog!');
 
 	var dogSprite = new Image();
 	dogSprite.src = "./sprites/dog_sprites" + Math.floor(Math.random() * (3)) + ".gif";
@@ -737,6 +739,8 @@
 	  if (otherObject.toString() === 'Squirrel') {
 	    if (!this.game.barkvalue) {
 	      this.relocate();
+	    } else {
+	      this.game.remove(otherObject);
 	    }
 	  } else if (otherObject.toString() === 'Acorn') {
 	    this.game.remove(otherObject);
@@ -845,8 +849,88 @@
 /* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var utils = __webpack_require__ (3);
+	var StationaryObject = __webpack_require__ (7);
+
+
+	var RADIUS = 60;
+
+	var bushImage = new Image();
+	bushImage.src = "./sprites/bush.gif";
+
+	function Bush (options) {
+	  this.pos = options.pos;
+	  this.radius = RADIUS;
+
+	  this.game = options.game;
+	}
+
+	utils.inherits(Bush, StationaryObject);
+
+	Bush.prototype.toString = function() {
+	  return 'Bush';
+	};
+
+	Bush.prototype.draw = function(ctx) {
+	  ctx.drawImage(bushImage, this.pos[0]- 1/2*RADIUS , this.pos[1]- 1/2*RADIUS , RADIUS, RADIUS);
+	  // ctx.beginPath();
+	  // ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+	  // ctx.lineWidth = 1;
+	  // ctx.strokeStyle = 'white';
+	  // ctx.stroke();
+
+
+	};
+
+
+	module.exports = Bush;
+
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var utils = __webpack_require__ (3);
+	var StationaryObject = __webpack_require__ (7);
+
+	var RADIUS = 30;
+
+	var boneImage = new Image();
+	boneImage.src = "./sprites/bone.png";
+
+	function Bone (options) {
+	  this.pos = options.pos;
+	  this.radius = RADIUS;
+	  this.game = options.game;
+	}
+
+	utils.inherits(Bone, StationaryObject);
+
+	Bone.prototype.toString = function() {
+	  return 'Bone';
+	};
+
+	Bone.prototype.draw = function(ctx) {
+	  ctx.drawImage(boneImage, this.pos[0]- 1/3*RADIUS , this.pos[1]- 1/3*RADIUS , RADIUS * 2/3, RADIUS * 2/3);
+	  // ctx.beginPath();
+	  // ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
+	  // ctx.lineWidth = 1;
+	  // ctx.strokeStyle = 'white';
+	  // ctx.stroke();
+
+
+	};
+
+
+	module.exports = Bone;
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
 	var Game = __webpack_require__(1);
-	var key = __webpack_require__(9);
+	var key = __webpack_require__(11);
 	var Dog = __webpack_require__(5);
 
 	function GameView(ctx,game) {
@@ -949,7 +1033,7 @@
 
 
 /***/ },
-/* 9 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//     keymaster.js
@@ -1248,86 +1332,6 @@
 	  if(true) module.exports = assignKey;
 
 	})(this);
-
-
-/***/ },
-/* 10 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var utils = __webpack_require__ (3);
-	var StationaryObject = __webpack_require__ (7);
-
-
-	var RADIUS = 60;
-
-	var bushImage = new Image();
-	bushImage.src = "./sprites/bush.gif";
-
-	function Bush (options) {
-	  this.pos = options.pos;
-	  this.radius = RADIUS;
-
-	  this.game = options.game;
-	}
-
-	utils.inherits(Bush, StationaryObject);
-
-	Bush.prototype.toString = function() {
-	  return 'Bush';
-	};
-
-	Bush.prototype.draw = function(ctx) {
-	  ctx.drawImage(bushImage, this.pos[0]- 1/2*RADIUS , this.pos[1]- 1/2*RADIUS , RADIUS, RADIUS);
-	  // ctx.beginPath();
-	  // ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
-	  // ctx.lineWidth = 1;
-	  // ctx.strokeStyle = 'white';
-	  // ctx.stroke();
-
-
-	};
-
-
-	module.exports = Bush;
-
-
-/***/ },
-/* 11 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var utils = __webpack_require__ (3);
-	var StationaryObject = __webpack_require__ (7);
-
-	var RADIUS = 30;
-
-	var boneImage = new Image();
-	boneImage.src = "./sprites/bone.png";
-
-	function Bone (options) {
-	  this.pos = options.pos;
-	  this.radius = RADIUS;
-	  this.game = options.game;
-	}
-
-	utils.inherits(Bone, StationaryObject);
-
-	Bone.prototype.toString = function() {
-	  return 'Bone';
-	};
-
-	Bone.prototype.draw = function(ctx) {
-	  ctx.drawImage(boneImage, this.pos[0]- 1/3*RADIUS , this.pos[1]- 1/3*RADIUS , RADIUS * 2/3, RADIUS * 2/3);
-	  // ctx.beginPath();
-	  // ctx.arc(this.pos[0],this.pos[1],this.radius/2,2*Math.PI,0, true);
-	  // ctx.lineWidth = 1;
-	  // ctx.strokeStyle = 'white';
-	  // ctx.stroke();
-
-
-	};
-
-
-	module.exports = Bone;
 
 
 /***/ }

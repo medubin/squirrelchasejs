@@ -6,7 +6,6 @@ var RADIUS = 30;
 var SPEED = [0,0];
 var DIRECTION = 0;
 
-console.log('dog!');
 
 var dogSprite = new Image();
 dogSprite.src = "./sprites/dog_sprites" + Math.floor(Math.random() * (3)) + ".gif";
@@ -128,6 +127,8 @@ Dog.prototype.collideWith = function (otherObject) {
   if (otherObject.toString() === 'Squirrel') {
     if (!this.game.barkvalue) {
       this.relocate();
+    } else {
+      this.game.remove(otherObject);
     }
   } else if (otherObject.toString() === 'Acorn') {
     this.game.remove(otherObject);
